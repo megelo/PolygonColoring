@@ -11,7 +11,7 @@ using std::ifstream;
 #include <stack>
 const int MAX_CHARS_PER_LINE = 512;
 const int MAX_TOKENS = 500;
-const char* const DELIMITER = "\" ,()\n";
+const char* const DELIMITER = "\" \t ,()\n";
 
 Client::Client(Drawable *drawable)
 {
@@ -31,7 +31,8 @@ void Client::nextPage() {
 //        draw_line_Bres(600, 600, 100, 200, 0x11111111, 0x5678abcd);
 //        draw_starburst();
 //        PolygonRenderer(700, 700, 600, 350, 100, 150, 0x00ff0000, 0x000000ff, 0x0000ff00);
-        mesh(1);
+//        mesh(true);
+        SimpDrawer("simptest.txt");
         drawable->updateScreen();   // you must call this to make the display change.
         break;
     case 2:
@@ -91,8 +92,6 @@ void Client::draw_line_Bres(int x1, int y1, int x2, int y2, unsigned int color1,
     dg = g2 - g1;
     db = b2 - b1;
 
-//    QTextStream(stdout)<<"r1: "<<r1<<" "<<"g1: "<<g1<<" "<<"b1: "<<b1<<endl;
-//    QTextStream(stdout)<<"dr1: "<<dr1<<" "<<"dg1: "<<dg1<<" "<<"db1: "<<db1<<endl;
     drawable->setPixel(x1, y1, color1);
 
     if(dx > dy) {
@@ -371,8 +370,6 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
         y2 = yy2;
         x3 = xx3;
         y3 = yy3;
-        QTextStream(stdout)<<"longest line is (p1,p2)"<<endl;
-
     }
     else if(linelength(xx2,yy2,xx3,yy3)>=linelength(xx1,yy1,xx2,yy2) && linelength(xx2,yy2,xx3,yy3)>=linelength(xx1,yy1,xx3,yy3)){
         x1 = xx2;
@@ -381,7 +378,6 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
         y2 = yy3;
         x3 = xx1;
         y3 = yy1;
-        QTextStream(stdout)<<"longest line is (p2,p3)"<<endl;
     }
     else{
         x1 = xx1;
@@ -390,12 +386,7 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
         y2 = yy3;
         x3 = xx2;
         y3 = yy2;
-        QTextStream(stdout)<<"longest line is (p1,p3)"<<endl;
     }
-
-    QTextStream(stdout)<<"(x,y)= "<<x1<<","<<y1<<" ->  "<<x2<<","<<y2<<endl;
-
-
 
     // Declaration for the longest line p1p2
     float long_dx = x2-x1;
@@ -443,32 +434,20 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
     float temp_b_g = g3;
     float temp_b_b = b3;
 
-    QTextStream(stdout)<<"r1= "<<r1<<" g1= "<<g1<<" b1= "<<b1<<endl;
-    QTextStream(stdout)<<"r2= "<<r2<<" g2= "<<g2<<" b2= "<<b2<<endl;
-    QTextStream(stdout)<<"r3= "<<r3<<" g3= "<<g3<<" b3= "<<b3<<endl;
-
     unsigned int current_Color1, current_Color2, current_Color3;
 
     drawable->setPixel(x1,y1,color1);
 
-
-
     //Check for vertical slope (m = infinity)
     if((x1-x2)==0){
         VertLine_p1p2 = true;
-        QTextStream(stdout)<<"p1p2 inf slope"<<endl;
     }
     if((x1-x3)==0){
         VertLine_p1p3 = true;
-        QTextStream(stdout)<<"p1p3 inf slope"<<endl;
     }
     if((x2-x3)==0){
         VertLine_p2p3 = true;
-        QTextStream(stdout)<<"p2p3 inf slope"<<endl;
     }
-
-    //QTextStream(stdout)<<"(y,x)= "<<x1<<","<<y1<<" ->  "<<x2<<","<<y2<<endl;
-    //QTextStream(stdout)<<"Slope= "<<long_m<<" || x1,y1="<<x1<<","<<y1<<"|| x2,y2="<<x2<<","<<y2<<"|| x3,y3="<<x3<<","<<y3<<endl;
 
     if(abs(long_m)<1){
         int long_ddx = abs(x2 - x1);
@@ -496,9 +475,6 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
         b_db = b_db/b_ddx;
 
         if(long_dx>0){// x1<x2
-            //QTextStream(stdout)<<"long_ddx, a_ddx, b_ddx= "<<long_ddx<<", "<<a_ddx<<", "<<b_ddx<<endl;
-            //QTextStream(stdout)<<"a_dr, a_dg, a_db= "<<a_dr<<", "<<a_dg<<", "<<a_db<<endl;
-
             for(float x = x1+1;x<=x2;x++){
                 long_y=long_m*x+long_b;
 
@@ -525,8 +501,6 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
                     a_rounded_r = round(temp_a_r);
                     a_rounded_g = round(temp_a_g);
                     a_rounded_b = round(temp_a_b);
-                    //QTextStream(stdout)<<"a_rounded_r= "<<a_rounded_r<<" a_rounded_g= "<<a_rounded_g<<" a_rounded_b= "<<a_rounded_b<<endl;
-
 
                     current_Color2 = (0xff<<24) + ((a_rounded_r & 0xff)<<16) + ((a_rounded_g & 0xff)<<8) + (a_rounded_b & 0xff);
 
@@ -580,8 +554,6 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
                     a_rounded_r = round(temp_a_r);
                     a_rounded_g = round(temp_a_g);
                     a_rounded_b = round(temp_a_b);
-                    //QTextStream(stdout)<<"a_rounded_r= "<<a_rounded_r<<" a_rounded_g= "<<a_rounded_g<<" a_rounded_b= "<<a_rounded_b<<endl;
-
 
                     current_Color2 = (0xff<<24) + ((a_rounded_r & 0xff)<<16) + ((a_rounded_g & 0xff)<<8) + (a_rounded_b & 0xff);
 
@@ -660,8 +632,6 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
                     a_rounded_r = round(temp_a_r);
                     a_rounded_g = round(temp_a_g);
                     a_rounded_b = round(temp_a_b);
-                    //QTextStream(stdout)<<"a_rounded_r= "<<a_rounded_r<<" a_rounded_g= "<<a_rounded_g<<" a_rounded_b= "<<a_rounded_b<<endl;
-
 
                     current_Color2 = (0xff<<24) + ((a_rounded_r & 0xff)<<16) + ((a_rounded_g & 0xff)<<8) + (a_rounded_b & 0xff);
 
@@ -715,8 +685,6 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
                     a_rounded_r = round(temp_a_r);
                     a_rounded_g = round(temp_a_g);
                     a_rounded_b = round(temp_a_b);
-                    //QTextStream(stdout)<<"a_rounded_r= "<<a_rounded_r<<" a_rounded_g= "<<a_rounded_g<<" a_rounded_b= "<<a_rounded_b<<endl;
-
 
                     current_Color2 = (0xff<<24) + ((a_rounded_r & 0xff)<<16) + ((a_rounded_g & 0xff)<<8) + (a_rounded_b & 0xff);
 
@@ -758,8 +726,8 @@ struct Client::pixel{
     int y;
 };
 
-void Client::mesh(int filled) {
-    if(filled == 0) {
+void Client::mesh(bool filled) {
+    if(filled == false) {
         qsrand(time(NULL)); // random seeding
         struct pixel grid[10][10];
         int shift_x;
@@ -834,123 +802,269 @@ void Client::mesh(int filled) {
     }
 }
 
-//bool Client::SimpDrawer(){
-//    ifstream fin;
+struct Client::matrix{
+    float mat[4][4];
+    matrix() {
+        for(int i = 0; i<4; i++){
+            for(int j = 0; j<4; j++){
+                if(i == j) {
+                    mat[i][j] = 1.0;
+                }
+                else {
+                    mat[i][j] = 0.0;
+                }
+            }
+        }
+    };
+};
 
-//    fin.open("newtest.txt");// open simp file
-//    if(fin.fail()){// check if open successfully
-//        QTextStream(stdout) << "file open error.."<<endl;
-//        return false;
-//    }
-//    const char* token[MAX_TOKENS][MAX_TOKENS] = {}; // initialize to 0
-//    const char* realtoken[MAX_TOKENS][MAX_TOKENS] = {};
-//    int tokencount[MAX_TOKENS] = {};
-//    int lineCount=0;
-//    //char buf[MAX_CHARS_PER_LINE];
-
-//    char buf[MAX_CHARS_PER_LINE];
-//    while(!fin.eof()){
-//        // read an entire line into memory
-
-//        char buf[MAX_CHARS_PER_LINE];
-//        fin.getline(buf, MAX_CHARS_PER_LINE);
-
-//        // parse the line into blank-delimited tokens
-//        int n = 0; // a for-loop index
-
-//        // array to store memory addresses of the tokens in buf
-
-//        // parse the line
-//        token[lineCount][n] = strtok(buf, DELIMITER); // first token
-//        if (token[lineCount][0]) // zero if line is blank
-//        {
-//          for (n = 1; n < MAX_TOKENS; n++)
-//          {
-//            token[lineCount][n] = strtok(0, DELIMITER); // subsequent tokens
-
-//            if (!token[lineCount][n]) break; // no more tokens
-//          }
-//        }
-//        tokencount[lineCount] = n;
-
-//        // process (print) the tokens
-//        for (int i = 0; i < n+1; i++){ // n = #of tokens
-//          if (i < n) {
-//            realtoken[lineCount][i] = strdup(token[lineCount][i]);
-//          }
-//          else {
-//              realtoken[lineCount][i] = "endofline";
-//          }
-//          QTextStream(stdout) << "RealToken[" << lineCount << "]["<<i<<"] = " << realtoken[lineCount][i] << endl;
-//        }
-//        lineCount++;
-//    }
-
-//    fin.close();
-
-//    using namespace std;
-
-//    stack<const char*> tokenstack;
-//    stack<int> xstack;
-//    stack<int> ystack;
-//    stack<int> zstack;
+typedef struct matrix matrix;
 
 
-//    int o = 0;
-//    int n = 0;
-//    int x1, y1, z1, x2, y2, z2, x3, y3, z3;
+bool Client::SimpDrawer(const char* filename){
+    ifstream fin;
 
-//    xstack.push(0); //X
-//    ystack.push(0); //Y
-//    zstack.push(0); //Z
+    fin.open(filename);// open simp file
+    if(fin.fail()){// check if open successfully
+        QTextStream(stdout) << "file open error.."<<endl;
+        return false;
+    }
+    const char* token[MAX_TOKENS][MAX_TOKENS] = {}; // initialize to 0
+    const char* realtoken[MAX_TOKENS][MAX_TOKENS] = {};
+    int tokencount[MAX_TOKENS] = {};
+    int linecount=0;
+    //char buf[MAX_CHARS_PER_LINE];
 
-//    while(o<lineCount) {
-//        while(n<tokencount[lineCount]) {
-//            n++;
-//            if(o == 0 && n == 0 && (strcmp(realtoken[o][n], "{") == 1)) {
-//                if(strcmp(realtoken[o][n], "{") == 1) {
-//                    tokenstack.push(realtoken[o][n]);
-//                }
-//                else if(strcmp(realtoken[o][n], "translate") == 1) {
-//                    tokenstack.push(realtoken[o][n]);
-//                    xstack.push(xstack.top() + atoi(realtoken[o][n+1]));
-//                    ystack.push(ystack.top() + atoi(realtoken[o][n+2]));
-//                    zstack.push(zstack.top() + atoi(realtoken[o][n+3]));
-//                    n+=3;
+    char buf[MAX_CHARS_PER_LINE];
+    while(!fin.eof()){
+        // read an entire line into memory
 
-//                }
-//                else if(strcmp(realtoken[o][n], "polygon") == 1) {
-//                    x1 = atoi(realtoken[o][n+1]);
-//                    y1 = atoi(realtoken[o][n+2]);
-//                    z1 = atoi(realtoken[o][n+3]);
-//                    n+=3;
+        char buf[MAX_CHARS_PER_LINE];
+        fin.getline(buf, MAX_CHARS_PER_LINE);
 
-//                    x2 = atoi(realtoken[o][n+1]);
-//                    y2 = atoi(realtoken[o][n+2]);
-//                    z2 = atoi(realtoken[o][n+3]);
-//                    n+=3;
+        // parse the line into blank-delimited tokens
+        int n = 0; // a for-loop index
 
-//                    x3 = atoi(realtoken[o][n+1]);
-//                    y3 = atoi(realtoken[o][n+2]);
-//                    z3 = atoi(realtoken[o][n+3]);
-//                    n+=3;
-//                    PolygonRenderer(x1, y1, x2, y2, x3, y3, 0x00ffffff, 0x00ffffff, 0x00ffffff);
-//                }
-////                else if(strcmp(realtoken[o][n], "}") == 1) {
-////                    bool islatesttransform;
-////                    while(strcmp(tokenstack.top(), "{") != 1){
-////                        if(islatesttransform){
+        // array to store memory addresses of the tokens in buf
 
-////                        }
-////                        tokenstack.pop();
-////                    }
-////                }
-//            }
-//            else {
-//                return 1;
-//            }
-//        }
-//        o++;
-//    }
-//}
+        // parse the line
+        token[linecount][n] = strtok(buf, DELIMITER); // first token
+        if (token[linecount][0]) // zero if line is blank
+        {
+          for (n = 1; n < MAX_TOKENS; n++)
+          {
+            token[linecount][n] = strtok(0, DELIMITER); // subsequent tokens
+
+            if (!token[linecount][n]) break; // no more tokens
+          }
+        }
+        tokencount[linecount] = n;
+
+        // process (print) the tokens
+        for (int i = 0; i < n+1; i++){ // n = #of tokens
+          if(i<n) {
+              realtoken[linecount][i] = strdup(token[linecount][i]);
+          }
+          else {
+              realtoken[linecount][i] = "endofline";
+          }
+          QTextStream(stdout) << "RealToken[" << linecount << "]["<<i<<"] = " << realtoken[linecount][i] << endl;
+        }
+        linecount++;
+    }
+
+    fin.close();
+
+    std::stack<matrix> matstack;
+    matrix mat;
+    matstack.push(mat);
+    int test = 0;
+    int p = 0;
+    bool filled=false;
+    int x1, y1, z1, x2, y2, z2, x3, y3, z3;
+
+    for(int line = 0; line<linecount; line++) {
+        p = 0;
+        while(realtoken[line][p] != "endofline") {
+            if(strcmp(realtoken[line][p], "#") == 0) {
+
+            }
+            else if(strcmp(realtoken[line][p], "{") == 0) {
+                matrix last_mat = matstack.top();
+                matrix mat;
+                int q = line+1;
+                line++;
+
+                while(strcmp(realtoken[line][p], "translate") == 0 || strcmp(realtoken[line][p], "scale") == 0 || strcmp(realtoken[line][p], "rotate") == 0){
+                    //Translation
+                    if((strcmp(realtoken[line][p], "translate") == 0)) {
+                        QTextStream(stdout)<<"TRANSLATE Token: "<<realtoken[line][p]<<endl;
+                        mat.mat[0][3]=mat.mat[0][3]+atof(realtoken[line][p+1]);
+                        mat.mat[1][3]=mat.mat[1][3]+atof(realtoken[line][p+2]);
+                        mat.mat[2][3]=mat.mat[2][3]+atof(realtoken[line][p+3]);
+
+                        line++; //transition to next row of tokens
+                    }
+                    //Scale
+                    else if((strcmp(realtoken[line][p], "scale") == 0)) {
+                        matrix scalemat;
+                        matrix temp_mat;
+                        for(int i=0;i<4;i++){ //Used for intermediate calculation of multiplying matrices
+                                for(int j=0;j<4;j++){
+                                    temp_mat.mat[i][j]=mat.mat[i][j];
+                                }
+                        }
+                        for(int i = 0; i<4; i++) {
+                            for(int j = 0; j<4; j++) {
+                                if (i == j) {
+                                    scalemat.mat[i][j] = atof(realtoken[line][p]);
+                                    p++;
+                                }
+                                else {
+                                    scalemat.mat[i][j] = 0.0;
+                                }
+                            }
+                        }
+                        for(int i = 0; i<4; i++){
+                            for(int j = 0; j<4; j++) {
+                                for(int k = 0; k< 4; k++) {
+                                    mat.mat[i][j] = temp_mat.mat[i][k] * scalemat.mat[k][j];
+                                }
+                            }
+                        }
+                        line++; //transition to next row of tokens
+                    }
+                    else {
+                        break;
+                    }
+                    QTextStream(stdout)<<"Token: "<<realtoken[line][p]<<endl;
+                }
+
+                //Combine new CTM with previous CTM
+                matrix temp_mat;
+                for(int i = 0; i<4; i++) {
+                    for(int j = 0; j<4; j++) {
+                        temp_mat.mat[i][j]=mat.mat[i][j];
+                        mat.mat[i][j] = 0;
+                    }
+                }
+                for(int i=0;i<4;i++){
+                    for(int j=0;j<4;j++){
+                        for(int k=0;k<4;k++){
+                            mat.mat[i][j]+= temp_mat.mat[i][k]*last_mat.mat[k][j];
+                        }
+                    }
+                }
+
+                matstack.push(mat);
+            }
+
+            else if((strcmp(realtoken[line][p],"}"))==0){
+                //We pop to restore previous CTM
+                matstack.pop();
+                p++;
+            }
+
+            else if(strcmp(realtoken[line][p], "polygon") == 0) {
+                matrix CTM;
+                for(int i = 0; i<4; i++) {
+                    for(int j = 0; j<4; j++) {
+                        CTM.mat[i][j] = matstack.top().mat[i][j];
+                    }
+                }
+                x1 = atof(token[line][p+1])*CTM.mat[0][0]+atof(token[line][p+2])*CTM.mat[0][1]+atof(token[line][p+3])*CTM.mat[0][2]+CTM.mat[0][3];
+                y1 = atof(token[line][p+1])*CTM.mat[1][0]+atof(token[line][p+2])*CTM.mat[1][1]+atof(token[line][p+3])*CTM.mat[1][2]+CTM.mat[1][3];
+                z1 = atof(token[line][p+1])*CTM.mat[2][0]+atof(token[line][p+2])*CTM.mat[2][1]+atof(token[line][p+3])*CTM.mat[2][2]+CTM.mat[2][3];
+                x2 = atof(token[line][p+4])*CTM.mat[0][0]+atof(token[line][p+5])*CTM.mat[0][1]+atof(token[line][p+6])*CTM.mat[0][2]+CTM.mat[0][3];
+                y2 = atof(token[line][p+4])*CTM.mat[1][0]+atof(token[line][p+5])*CTM.mat[1][1]+atof(token[line][p+6])*CTM.mat[1][2]+CTM.mat[1][3];
+                z2 = atof(token[line][p+4])*CTM.mat[2][0]+atof(token[line][p+5])*CTM.mat[2][1]+atof(token[line][p+6])*CTM.mat[2][2]+CTM.mat[2][3];
+                x3 = atof(token[line][p+7])*CTM.mat[0][0]+atof(token[line][p+8])*CTM.mat[0][1]+atof(token[line][p+9])*CTM.mat[0][2]+CTM.mat[0][3];
+                y3 = atof(token[line][p+7])*CTM.mat[1][0]+atof(token[line][p+8])*CTM.mat[1][1]+atof(token[line][p+9])*CTM.mat[1][2]+CTM.mat[1][3];
+                z3 = atof(token[line][p+7])*CTM.mat[2][0]+atof(token[line][p+8])*CTM.mat[2][1]+atof(token[line][p+9])*CTM.mat[2][2]+CTM.mat[2][3];
+
+                if(filled){
+                    PolygonRenderer(x1,y1,x2,y2,x3,y3,0xffffffff,0xffffffff,0xffffffff);
+                }
+                else{
+                    draw_line_Bres(x1,y1,x2,y2,0xffffffff,0xffffffff);
+                    draw_line_Bres(x1,y1,x3,y3,0xffffffff,0xffffffff);
+                    draw_line_Bres(x2,y2,x3,y3,0xffffffff,0xffffffff);
+                }
+                p+=10;
+
+                test++;
+            }
+            else if(strcmp(realtoken[line][p], "mesh") == 0) {
+                p++;
+
+            }
+            else {
+                break;
+            }
+        }
+    }
+    return true;
+}
+
+bool Client::meshDrawer(const char* filename, mat m) {
+    ifstream fin;
+
+    fin.open((char*)filename);// open mesh file
+    if(fin.fail()){// check if open successfully
+        QTextStream(stdout) << "file open error.."<<endl;
+        return false;
+    }
+
+    const char* tempTok[MAX_TOKENS][MAX_TOKENS] = {}; // initialize to 0
+    int lineCount=0;
+    const char* token[MAX_TOKENS][MAX_TOKENS] = {};
+
+    while(!fin.eof()){
+        // read an entire line into memory
+        char buf[MAX_CHARS_PER_LINE];
+
+        fin.getline(buf, MAX_CHARS_PER_LINE);
+        // parse the line into blank-delimited tokens
+        int n = 0; // a for-loop index
+
+        tempTok[lineCount][n] = strtok(buf, DELIMITER); // first token
+
+        if (tempTok[lineCount][0]) // zero if line is blank
+        {
+          for (n = 1; n < MAX_TOKENS; n++)
+          {
+            tempTok[lineCount][n] = strtok(NULL, DELIMITER); // subsequent tokens
+            if (!tempTok[lineCount][n]) break; // no more tokens
+          }
+        }
+
+        int i =0;
+        // process (print) the tokens
+        for (i; i < n; i++){
+//          QTextStream(stdout) << "Token[" << lineCount << "]["<<i<<"] = " << tempTok[lineCount][i] << endl;
+          token[lineCount][i] = strdup(tempTok[lineCount][i]);
+        }
+        token[lineCount][i] = "~";
+        lineCount++;
+    }
+
+    fin.close();
+    //////////////////////
+    // parsing complete //
+    //////////////////////
+
+    int row = atoi(token[0][0]);
+    int col = atoi(token[1][0]);
+    int meshSize = row*col;
+
+    meshPixel gird_points[row][col];
+
+
+
+
+
+
+    return true;
+}
+}
 
