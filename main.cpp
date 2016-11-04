@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
     window.setPageTurner(&client);  // the window must be given a (PageTurner *)
                                     // I made the client a PageTurner, but it doesn't have to
                                     // be that way.
+
     return app.exec();
 }
 
