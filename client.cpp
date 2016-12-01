@@ -1,21 +1,54 @@
 #include <iostream>
-#include <ctime>
-#include "client.h"
 #include <math.h>
 #include <QTextStream>
-#define PI  3.14159265358979323846
-
+#include <iostream>
+#include <ctime>
+#include <stdlib.h>
 #include <fstream> //parse simp file
 using std::ifstream;
 #include <string>
 #include <stack>
+#include "client.h"
+
+#define PI  3.14159265358979323846  /* pi */
+
 const int MAX_CHARS_PER_LINE = 512;
 const int MAX_TOKENS = 500;
-const char* const DELIMITER = "\" \t ,()\n";
+const char* const DELIMITER = "\"    \t,()\n";
 
-Client::Client(Drawable *drawable)
+struct Client::pixel{
+    int x;
+    int y;
+};
+
+struct Client::Mat{
+    float mat[4][4];
+    Mat() {
+        for(int i = 0; i<4; i++){
+            for(int j = 0; j<4; j++){
+                if(i == j) {
+                    mat[i][j] = 1.0;
+                }
+                else {
+                    mat[i][j] = 0.0;
+                }
+            }
+        }
+    };
+};
+typedef struct Mat Mat;
+
+struct Client::meshPixel{
+    int x;
+    int y;
+    int z;
+};
+typedef struct meshPixel meshPixel;
+
+Client::Client(Drawable *drawable, char *argv[])
 {
     this->drawable = drawable;
+    this->argv = argv;
 }
 
 void Client::nextPage() {
@@ -24,27 +57,57 @@ void Client::nextPage() {
     pageNumber++;
     std::cout << "PageNumber " << pageNumber << std::endl;
 
-    switch(pageNumber % 4) {
+    switch(pageNumber % 8) {
     case 1:
         draw_rect(0, 0, 750, 750, 0xffffffff);
         draw_rect(50, 50, 700, 700, 0x00000000);
-//        draw_line_Bres(600, 600, 100, 200, 0x11111111, 0x5678abcd);
-//        draw_starburst();
-//        PolygonRenderer(700, 700, 600, 350, 100, 150, 0x00ff0000, 0x000000ff, 0x0000ff00);
-//        mesh(true);
-        SimpDrawer("simptest.txt");
-        drawable->updateScreen();   // you must call this to make the display change.
+        drawable->updateScreen();
+        SimpDrawer(argv,0xffffffff,0x00003366);
         break;
     case 2:
+        draw_rect(0, 0, 750, 750, 0xffffffff);
+        draw_rect(50, 50, 700, 700, 0x00000000);
+        //mesh(true);
+        drawable->updateScreen();
         break;
     case 3:
+        draw_rect(0, 0, 750, 750, 0xffffffff);
+        draw_rect(50, 50, 700, 700, 0x00000000);
+//        SimpDrawer("page3.txt", 0xffffffff, 0x00000000);
+        drawable->updateScreen();
         break;
     case 4:
-        // fall through...
+        draw_rect(0, 0, 750, 750, 0xffffffff);
+        draw_rect(50, 50, 700, 700, 0x00000000);
+//        SimpDrawer("page4.txt", 0xff00CC66, 0xff008040);
+        drawable->updateScreen();
+        break;
+    case 5:
+        draw_rect(0, 0, 750, 750, 0xffffffff);
+        draw_rect(50, 50, 700, 700, 0x00000000);
+        drawable->updateScreen();
+        break;
+    case 6:
+        draw_rect(0, 0, 750, 750, 0xffffffff);
+        draw_rect(50, 50, 700, 700, 0x00000000);
+//        SimpDrawer("test1.simp", 0xffffffff, 0x00000000);
+        drawable->updateScreen();
+        break;
+    case 7:
+        draw_rect(0, 0, 750, 750, 0xffffffff);
+        draw_rect(50, 50, 700, 700, 0x00000000);
+//        SimpDrawer("test2.simp", 0xffffffff, 0x00000000);
+        drawable->updateScreen();
+        break;
+    case 8:
+        draw_rect(0, 0, 750, 750, 0xffffffff);
+        draw_rect(50, 50, 700, 700, 0x00000000);
+//        SimpDrawer("test3.simp", 0xffffffff, 0x00000000);
+        drawable->updateScreen();
+        break;
     default:
         draw_rect(0, 0, 750, 750, 0xffffffff);
         draw_rect(50, 50, 700, 700, 0x00000000);
-
         drawable->updateScreen();
     }
 }
@@ -57,8 +120,7 @@ void Client::draw_rect(int x1, int y1, int x2, int y2, unsigned int color) {
     }
 }
 
-void Client::draw_line_Bres(int x1, int y1, int x2, int y2, unsigned int color1, unsigned int color2) {
-
+void Client::draw_line_Bres(int x1, int y1, int x2, int y2, unsigned int color1, unsigned int color2){
     int dx = x2-x1;
     if(x1>x2) {
         dx = x1-x2;
@@ -68,15 +130,12 @@ void Client::draw_line_Bres(int x1, int y1, int x2, int y2, unsigned int color1,
     if(y1>y2) {
         dy = y1-y2;
     }
-    int twodx = 2*dx;
-    int twody = 2*dy;
 
-    int x = x1;
-    int y = y1;
+    int two_dx = 2*dx;
+    int two_dy = 2*dy;
 
-    float r, g ,b, dr, dg, db, drdx, dgdx, dbdx, drdy, dgdy, dbdy;
-    int newcolor;
-    int r1, g1, b1, r2, g2, b2, roundr, roundg, roundb;
+    int r1,g1,b1,r2,b2,g2,rounded_r,rounded_g,rounded_b;
+
     r1 = (color1>>16)& 0xff;
     g1 = (color1>>8) & 0xff;
     b1 = color1 & 0xff;
@@ -84,272 +143,300 @@ void Client::draw_line_Bres(int x1, int y1, int x2, int y2, unsigned int color1,
     g2 = (color2>>8) & 0xff;
     b2 = color2 & 0xff;
 
-    r = r1;
-    g = g1;
-    b = b1;
 
-    dr = r2 - r1;
-    dg = g2 - g1;
-    db = b2 - b1;
+    unsigned int current_Color;
 
-    drawable->setPixel(x1, y1, color1);
+    drawable->setPixel(x1,y1,color1);
 
-    if(dx > dy) {
-        int t = twody - twodx;
-        int err = twody - dx;
+    if(dx>dy){
+        int err = two_dy-dx;
+        int t2 = two_dy-two_dx;
 
-        if(y1 > y2) {
-            if(x1 > x2) {
-                for(x=x1-1; x>x2; x--) {
 
-                    if(err>=0) {
-                        err = err + t;
-                        y--;
+
+        if(y2>y1){
+            int y = y1;
+            if(x2>x1){
+                int ddx = x2 - x1;
+                float dr = r2-r1;
+                dr = dr/ddx;
+                float dg = g2-g1;
+                dg = dg/ddx;
+                float db = b2-b1;
+                db = db/ddx;
+
+                float temp_r = r1;
+                float temp_g = g1;
+                float temp_b = b1;
+                // Traverse along x+
+                for(int x=x1+1; x<=x2; x++){
+                    if (err>=0){
+                        err = err + t2;
+                        y++;
                     }
-                    else {
-                        err = err + twody;
+                    else{
+                        err = err+two_dy;
                     }
+                    temp_r = temp_r+dr;
+                    temp_g = temp_g+dg;
+                    temp_b = temp_b+db;
+                    rounded_r = round(temp_r);
+                    rounded_g = round(temp_g);
+                    rounded_b = round(temp_b);
 
-                    drdx = dr/dx;
-                    dgdx = dg/dx;
-                    dbdx = db/dx;
-
-                    r += drdx;
-                    g += dgdx;
-                    b += dbdx;
-
-                    roundr = round(r);
-                    roundg = round(g);
-                    roundb = round(b);
-
-//                    QTextStream(stdout)<<"r: "<<roundr<<" "<<"g: "<<roundg<<" "<<"be: "<<roundb<<endl;
-
-                    newcolor = (0xff << 24) + ((roundr & 0xff) << 16) + ((roundg & 0xff) << 8) + (roundb & 0xff);
-                    drawable->setPixel(x, y, newcolor);
+                    current_Color = (0xff<<24) + ((rounded_r & 0xff)<<16) + ((rounded_g & 0xff)<<8) + (rounded_b & 0xff);
+                    drawable->setPixel(x,y,current_Color);
                 }
             }
-            else {
-                for(x=x1+1; x<x2; x++) {
+            else{
+                int ddx = x1 - x2;
+                float dr = r2-r1;
+                dr = dr/ddx;
+                float dg = g2-g1;
+                dg = dg/ddx;
+                float db = b2-b1;
+                db = db/ddx;
 
-                    if(err>=0) {
-                        err = err + t;
-                        y--;
+                float temp_r = r1;
+                float temp_g = g1;
+                float temp_b = b1;
+                // Traverse along x-
+                for(int x=x1-1; x>=x2; x--){
+                    if (err>=0){
+                        err = err + t2;
+                        y++;
                     }
-                    else {
-                        err = err + twody;
+                    else{
+                        err = err+two_dy;
                     }
+                    temp_r = temp_r+dr;
+                    temp_g = temp_g+dg;
+                    temp_b = temp_b+db;
+                    rounded_r = round(temp_r);
+                    rounded_g = round(temp_g);
+                    rounded_b = round(temp_b);
 
-                    drdx = dr/dx;
-                    dgdx = dg/dx;
-                    dbdx = db/dx;
-
-                    r += drdx;
-                    g += dgdx;
-                    b += dbdx;
-
-                    roundr = round(r);
-                    roundg = round(g);
-                    roundb = round(b);
-
-//                    QTextStream(stdout)<<"r: "<<roundr<<" "<<"g: "<<roundg<<" "<<"be: "<<roundb<<endl;
-
-                    newcolor = (0xff << 24) + ((roundr & 0xff) << 16) + ((roundg & 0xff) << 8) + (roundb & 0xff);
-                    drawable->setPixel(x, y, newcolor);
+                    current_Color = (0xff<<24) + ((rounded_r & 0xff)<<16) + ((rounded_g & 0xff)<<8) + (rounded_b & 0xff);
+                    drawable->setPixel(x,y,current_Color);
                 }
             }
         }
-        else {
-            if(x1 > x2) {
-                for(x=x1-1; x>x2; x--) {
+        else{
+            if(x2>x1){
+                int ddx = x2 - x1;
+                float dr = r2-r1;
+                dr = dr/ddx;
+                float dg = g2-g1;
+                dg = dg/ddx;
+                float db = b2-b1;
+                db = db/ddx;
 
-                    if(err>=0) {
-                        err = err + t;
-                        y++;
+                float temp_r = r1;
+                float temp_g = g1;
+                float temp_b = b1;
+                int y = y1;
+                for(int x=x1+1; x<=x2; x++){
+                    if (err>=0){
+                        err = err + t2;
+                        y--;
                     }
-                    else {
-                        err = err + twody;
+                    else{
+                        err = err+two_dy;
                     }
-                    drdx = dr/dx;
-                    dgdx = dg/dx;
-                    dbdx = db/dx;
+                    temp_r = temp_r+dr;
+                    temp_g = temp_g+dg;
+                    temp_b = temp_b+db;
+                    rounded_r = round(temp_r);
+                    rounded_g = round(temp_g);
+                    rounded_b = round(temp_b);
 
-                    r += drdx;
-                    g += dgdx;
-                    b += dbdx;
-
-                    roundr = round(r);
-                    roundg = round(g);
-                    roundb = round(b);
-
-//                    QTextStream(stdout)<<"r: "<<roundr<<" "<<"g: "<<roundg<<" "<<"be: "<<roundb<<endl;
-
-                    newcolor = (0xff << 24) + ((roundr & 0xff) << 16) + ((roundg & 0xff) << 8) + (roundb & 0xff);
-                    drawable->setPixel(x, y, newcolor);
+                    current_Color = (0xff<<24) + ((rounded_r & 0xff)<<16) + ((rounded_g & 0xff)<<8) + (rounded_b & 0xff);
+                    drawable->setPixel(x,y,current_Color);
                 }
             }
-            else {
-                for(x=x1+1; x<x2; x++) {
+            else{
+                int ddx = x1 - x2;
+                float dr = r2-r1;
+                dr = dr/ddx;
+                float dg = g2-g1;
+                dg = dg/ddx;
+                float db = b2-b1;
+                db = db/ddx;
 
-                    if(err>=0) {
-                        err = err + t;
-                        y++;
+                float temp_r = r1;
+                float temp_g = g1;
+                float temp_b = b1;
+                int y = y1;
+                for(int x=x1-1; x>=x2; x--){
+                    if (err>=0){
+                        err = err + t2;
+                        y--;
                     }
-                    else {
-                        err = err + twody;
+                    else{
+                        err = err+two_dy;
                     }
-                    drdx = dr/dx;
-                    dgdx = dg/dx;
-                    dbdx = db/dx;
+                    temp_r = temp_r+dr;
+                    temp_g = temp_g+dg;
+                    temp_b = temp_b+db;
+                    rounded_r = round(temp_r);
+                    rounded_g = round(temp_g);
+                    rounded_b = round(temp_b);
 
-                    r += drdx;
-                    g += dgdx;
-                    b += dbdx;
-
-                    roundr = round(r);
-                    roundg = round(g);
-                    roundb = round(b);
-
-                    QTextStream(stdout)<<"r: "<<roundr<<" "<<"g: "<<roundg<<" "<<"be: "<<roundb<<endl;
-
-                    newcolor = (0xff << 24) + ((roundr & 0xff) << 16) + ((roundg & 0xff) << 8) + (roundb & 0xff);
-                    drawable->setPixel(x, y, newcolor);
+                    current_Color = (0xff<<24) + ((rounded_r & 0xff)<<16) + ((rounded_g & 0xff)<<8) + (rounded_b & 0xff);
+                    drawable->setPixel(x,y,current_Color);
                 }
             }
         }
     }
-    else {
-        int t = twodx - twody;
-        int err = twodx - dy;
+    else{
+        int err = two_dx-dy;
+        int t2 = two_dx-two_dy;
+        if(x2>x1){
+                if(y2>y1){
+                    int ddy = y2 - y1;
+                    float dr = r2-r1;
+                    dr = dr/ddy;
+                    float dg = g2-g1;
+                    dg = dg/ddy;
+                    float db = b2-b1;
+                    db = db/ddy;
 
-        if(x1>x2){
-            if(y1>y2){
-                for(y=y1-1; y>y2; y--) {
-                    if(err>=0) {
-                        err = err + t;
-                        x--;
+                    float temp_r = r1;
+                    float temp_g = g1;
+                    float temp_b = b1;
+
+                    int x = x1;
+                    // Traverse along y+
+                    for(int y=y1+1; y<=y2; y++){
+                        if (err>=0){
+                            err = err + t2;
+                            x++;
+                        }
+                        else{
+                            err = err+two_dx;
+                        }
+                        temp_r = temp_r+dr;
+                        temp_g = temp_g+dg;
+                        temp_b = temp_b+db;
+                        rounded_r = round(temp_r);
+                        rounded_g = round(temp_g);
+                        rounded_b = round(temp_b);
+
+                        current_Color = (0xff<<24) + ((rounded_r & 0xff)<<16) + ((rounded_g & 0xff)<<8) + (rounded_b & 0xff);
+
+                        drawable->setPixel(x,y,current_Color);
                     }
-                    else {
-                        err = err + twodx;
-                    }
-                    drdy = dr/dy;
-                    dgdy = dg/dy;
-                    dbdy = db/dy;
-
-                    r += drdy;
-                    g += dgdy;
-                    b += dbdy;
-
-                    roundr = round(r);
-                    roundg = round(g);
-                    roundb = round(b);
-
-//                    QTextStream(stdout)<<"r: "<<roundr<<" "<<"g: "<<roundg<<" "<<"be: "<<roundb<<endl;
-
-                    newcolor = (0xff << 24) + ((roundr & 0xff) << 16) + ((roundg & 0xff) << 8) + (roundb & 0xff);
-                    drawable->setPixel(x, y, newcolor);
                 }
-            }
-            else{
-                for(y=y1+1; y<y2; y++) {
-                    if(err>=0) {
-                        err = err + t;
-                        x--;
+                else{
+                    int ddy = y1 - y2;
+                    float dr = r2-r1;
+                    dr = dr/ddy;
+                    float dg = g2-g1;
+                    dg = dg/ddy;
+                    float db = b2-b1;
+                    db = db/ddy;
+
+                    float temp_r = r1;
+                    float temp_g = g1;
+                    float temp_b = b1;
+
+                    int x = x1;
+                    for(int y=y1+1; y>=y2; y--){
+                        if (err>=0){
+                            err = err + t2;
+                            x++;
+                        }
+                        else{
+                            err = err+two_dx;
+                        }
+                        temp_r = temp_r+dr;
+                        temp_g = temp_g+dg;
+                        temp_b = temp_b+db;
+                        rounded_r = round(temp_r);
+                        rounded_g = round(temp_g);
+                        rounded_b = round(temp_b);
+
+                        current_Color = (0xff<<24) + ((rounded_r & 0xff)<<16) + ((rounded_g & 0xff)<<8) + (rounded_b & 0xff);
+
+                        drawable->setPixel(x,y,current_Color);
                     }
-                    else {
-                        err = err + twodx;
-                    }
-                    drdy = dr/dy;
-                    dgdy = dg/dy;
-                    dbdy = db/dy;
-
-                    r += drdy;
-                    g += dgdy;
-                    b += dbdy;
-
-                    roundr = round(r);
-                    roundg = round(g);
-                    roundb = round(b);
-
-//                    QTextStream(stdout)<<"r: "<<roundr<<" "<<"g: "<<roundg<<" "<<"be: "<<roundb<<endl;
-
-                    newcolor = (0xff << 24) + ((roundr & 0xff) << 16) + ((roundg & 0xff) << 8) + (roundb & 0xff);
-                    drawable->setPixel(x, y, newcolor);
                 }
-            }
         }
-        else {
-            if(y1>y2){
-                for(y=y1+1; y>y2; y--) {
-                    if(err>=0) {
-                        err = err + t;
-                        x++;
+        else{
+            if(y2>y1){
+                int ddy = y2 - y1;
+                float dr = r2-r1;
+                dr = dr/ddy;
+                float dg = g2-g1;
+                dg = dg/ddy;
+                float db = b2-b1;
+                db = db/ddy;
+
+                float temp_r = r1;
+                float temp_g = g1;
+                float temp_b = b1;
+
+                int x = x1;
+                // Traverse along y+
+                for(int y=y1+1; y<=y2; y++){
+                    if (err>=0){
+                        err = err + t2;
+                        x--;
                     }
-                    else {
-                        err = err + twodx;
+                    else{
+                        err = err+two_dx;
                     }
-                    drdy = dr/dy;
-                    dgdy = dg/dy;
-                    dbdy = db/dy;
+                    temp_r = temp_r+dr;
+                    temp_g = temp_g+dg;
+                    temp_b = temp_b+db;
+                    rounded_r = round(temp_r);
+                    rounded_g = round(temp_g);
+                    rounded_b = round(temp_b);
 
-                    r += drdy;
-                    g += dgdy;
-                    b += dbdy;
+                    current_Color = (0xff<<24) + ((rounded_r & 0xff)<<16) + ((rounded_g & 0xff)<<8) + (rounded_b & 0xff);
 
-                    roundr = round(r);
-                    roundg = round(g);
-                    roundb = round(b);
-
-//                    QTextStream(stdout)<<"r: "<<roundr<<" "<<"g: "<<roundg<<" "<<"be: "<<roundb<<endl;
-
-                    newcolor = (0xff << 24) + ((roundr & 0xff) << 16) + ((roundg & 0xff) << 8) + (roundb & 0xff);
-                    drawable->setPixel(x, y, newcolor);
+                    drawable->setPixel(x,y,current_Color);
                 }
             }
             else{
-                for(y=y1+1; y<y2; y++) {
-                    if(err>=0) {
-                        err = err + t;
-                        x++;
+                int ddy = y1 - y2;
+                float dr = r2-r1;
+                dr = dr/ddy;
+                float dg = g2-g1;
+                dg = dg/ddy;
+                float db = b2-b1;
+                db = db/ddy;
+
+                float temp_r = r1;
+                float temp_g = g1;
+                float temp_b = b1;
+
+                int x = x1;
+                // Traverse along y-
+                for(int y=y1+1; y>=y2; y--){
+                    if (err>=0){
+                        err = err + t2;
+                        x--;
                     }
-                    else {
-                        err = err + twodx;
+                    else{
+                        err = err+two_dx;
                     }
-                    drdy = dr/dy;
-                    dgdy = dg/dy;
-                    dbdy = db/dy;
+                    temp_r = temp_r+dr;
+                    temp_g = temp_g+dg;
+                    temp_b = temp_b+db;
 
-                    r += drdy;
-                    g += dgdy;
-                    b += dbdy;
+                    rounded_r = round(temp_r);
+                    rounded_g = round(temp_g);
+                    rounded_b = round(temp_b);
 
-                    roundr = round(r);
-                    roundg = round(g);
-                    roundb = round(b);
+                    current_Color = (0xff<<24) + ((rounded_r & 0xff)<<16) + ((rounded_g & 0xff)<<8) + (rounded_b & 0xff);
 
-//                    QTextStream(stdout)<<"r: "<<roundr<<" "<<"g: "<<roundg<<" "<<"be: "<<roundb<<endl;
-
-                    newcolor = (0xff << 24) + ((roundr & 0xff) << 16) + ((roundg & 0xff) << 8) + (roundb & 0xff);
-                    drawable->setPixel(x, y, newcolor);
+                    drawable->setPixel(x,y,current_Color);
                 }
             }
         }
     }
 }
-
-void Client::draw_starburst() {
-    float x1,x2,y1,y2 = 0;
-    float space = 2*PI/90;
-
-    for (float theta=0; theta<2*PI; theta+=space){
-        x1 = 200;
-        y1 = 200;
-        x2 = 200 + 75*cos(theta);
-        y2 = 200 + 75*sin(theta);
-        QTextStream(stdout)<<"(x2,y2)= ("<<x2<<","<<y2<<")"<<endl;
-        draw_line_Bres(x1,y1,x2,y2,0xabcd1234, 0xefab7890);
-    }
-}
-
 int Client::Distance(int x1, int y1, int x2, int y2){
     return sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
 }
@@ -360,24 +447,52 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
     bool VertLine_p1p3 = false;
     bool VertLine_p2p3 = false;
     float x1,y1,x2,y2,x3,y3;
+    int r1,g1,b1,r2,b2,g2,r3,g3,b3,long_rounded_r,long_rounded_g,long_rounded_b,a_rounded_r,a_rounded_g,a_rounded_b,b_rounded_r,b_rounded_g,b_rounded_b;
 
     // Assigning parameters to p1,p2,p3
     // (x1,y1)->(x2,y2) is assigned to be the longest line
-    if(linelength(xx1,yy1,xx2,yy2)>=linelength(xx1,yy1,xx3,yy3) && linelength(xx1,yy1,xx2,yy2)>=linelength(xx2,yy2,xx3,yy3)){
+    if(Distance(xx1,yy1,xx2,yy2)>=Distance(xx1,yy1,xx3,yy3) && Distance(xx1,yy1,xx2,yy2)>=Distance(xx2,yy2,xx3,yy3)){
         x1 = xx1;
         y1 = yy1;
         x2 = xx2;
         y2 = yy2;
         x3 = xx3;
         y3 = yy3;
+
+        r1 = (color1>>16)& 0xff;
+        g1 = (color1>>8) & 0xff;
+        b1 = color1 & 0xff;
+        r2 = (color2>>16)& 0xff;
+        g2 = (color2>>8) & 0xff;
+        b2 = color2 & 0xff;
+        r3 = (color3>>16)& 0xff;
+        g3 = (color3>>8) & 0xff;
+        b3 = color3 & 0xff;
+
+//        QTextStream(stdout)<<"longest line is (p1,p2)"<<endl;
+
     }
-    else if(linelength(xx2,yy2,xx3,yy3)>=linelength(xx1,yy1,xx2,yy2) && linelength(xx2,yy2,xx3,yy3)>=linelength(xx1,yy1,xx3,yy3)){
+    else if(Distance(xx2,yy2,xx3,yy3)>=Distance(xx1,yy1,xx2,yy2) && Distance(xx2,yy2,xx3,yy3)>=Distance(xx1,yy1,xx3,yy3)){
         x1 = xx2;
         y1 = yy2;
         x2 = xx3;
         y2 = yy3;
         x3 = xx1;
         y3 = yy1;
+
+        r1 = (color2>>16)& 0xff;
+        g1 = (color2>>8) & 0xff;
+        b1 = color2 & 0xff;
+        r2 = (color3>>16)& 0xff;
+        g2 = (color3>>8) & 0xff;
+        b2 = color3 & 0xff;
+        r3 = (color1>>16)& 0xff;
+        g3 = (color1>>8) & 0xff;
+        b3 = color1 & 0xff;
+
+//        QTextStream(stdout)<<"longest line is (p2,p3)"<<endl;
+
+
     }
     else{
         x1 = xx1;
@@ -386,7 +501,22 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
         y2 = yy3;
         x3 = xx2;
         y3 = yy2;
+
+        r1 = (color1>>16)& 0xff;
+        g1 = (color1>>8) & 0xff;
+        b1 = color1 & 0xff;
+        r2 = (color3>>16)& 0xff;
+        g2 = (color3>>8) & 0xff;
+        b2 = color3 & 0xff;
+        r3 = (color2>>16)& 0xff;
+        g3 = (color2>>8) & 0xff;
+        b3 = color2 & 0xff;
+//        QTextStream(stdout)<<"longest line is (p1,p3)"<<endl;
     }
+
+//    QTextStream(stdout)<<"(x,y)= "<<x1<<","<<y1<<" ->  "<<x2<<","<<y2<<endl;
+
+
 
     // Declaration for the longest line p1p2
     float long_dx = x2-x1;
@@ -412,18 +542,6 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
     float b_x;
     float b_y;
 
-    int r1,g1,b1,r2,b2,g2,r3,g3,b3,long_rounded_r,long_rounded_g,long_rounded_b,a_rounded_r,a_rounded_g,a_rounded_b,b_rounded_r,b_rounded_g,b_rounded_b;
-
-    r1 = (color1>>16)& 0xff;
-    g1 = (color1>>8) & 0xff;
-    b1 = color1 & 0xff;
-    r2 = (color2>>16)& 0xff;
-    g2 = (color2>>8) & 0xff;
-    b2 = color2 & 0xff;
-    r3 = (color3>>16)& 0xff;
-    g3 = (color3>>8) & 0xff;
-    b3 = color3 & 0xff;
-
     float temp_long_r = r1;
     float temp_long_g = g1;
     float temp_long_b = b1;
@@ -434,9 +552,15 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
     float temp_b_g = g3;
     float temp_b_b = b3;
 
+//    QTextStream(stdout)<<"r1= "<<r1<<" g1= "<<g1<<" b1= "<<b1<<endl;
+//    QTextStream(stdout)<<"r2= "<<r2<<" g2= "<<g2<<" b2= "<<b2<<endl;
+//    QTextStream(stdout)<<"r3= "<<r3<<" g3= "<<g3<<" b3= "<<b3<<endl;
+
     unsigned int current_Color1, current_Color2, current_Color3;
 
     drawable->setPixel(x1,y1,color1);
+
+
 
     //Check for vertical slope (m = infinity)
     if((x1-x2)==0){
@@ -522,7 +646,6 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
                     b_rounded_b = round(temp_b_b);
 
                     current_Color3 = (0xff<<24) + ((b_rounded_r & 0xff)<<16) + ((b_rounded_g & 0xff)<<8) + (b_rounded_b & 0xff);
-
                     draw_line_Bres(x,long_y,x,b_y,current_Color1,current_Color3);
                 }
 
@@ -607,7 +730,10 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
 
         if(long_dy>0){
             for(float y=y1+1;y<=y2;y++){
-                long_x=(y-long_b)/long_m;
+                if(VertLine_p1p2){
+                    long_x=x1;
+                }
+                else long_x=(y-long_b)/long_m;
 
                 temp_long_r = temp_long_r+long_dr;
                 temp_long_g = temp_long_g+long_dg;
@@ -660,7 +786,10 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
         }
         else{
             for(float y=y1-1; y>=y2; y--){
-                long_x=(y-long_b)/long_m;
+                if(VertLine_p1p2){
+                    long_x=x1;
+                }
+                else long_x=(y-long_b)/long_m;
 
                 temp_long_r = temp_long_r+long_dr;
                 temp_long_g = temp_long_g+long_dg;
@@ -712,7 +841,9 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
             }
         }
     }
+
 }
+
 
 float Client::linelength(float x1, float y1, float x2, float y2) {
     float a = abs(x1-x2);
@@ -721,107 +852,411 @@ float Client::linelength(float x1, float y1, float x2, float y2) {
     return c;
 }
 
-struct Client::pixel{
-    int x;
-    int y;
-};
+void Client::depthCuePolygon(int x1,int y1,int z1, int x2, int y2, int z2, int x3, int y3, int z3, unsigned int nearColor, unsigned int farColor){
+    if(z1<=200 && z1>=0 && z2<=200 && z2>=0 && z3<=200 && z3>=0){
+        float rNear = (nearColor>>16)& 0xff;
+        float gNear = (nearColor>>8) & 0xff;
+        float bNear = nearColor & 0xff;
+        float rFar = (farColor>>16)& 0xff;
+        float gFar = (farColor>>8) & 0xff;
+        float bFar = farColor & 0xff;
 
-void Client::mesh(bool filled) {
-    if(filled == false) {
-        qsrand(time(NULL)); // random seeding
-        struct pixel grid[10][10];
-        int shift_x;
-        int shift_y;
-        for(int i=0;i<=9;i++){
-            for(int j=0;j<=9;j++){
-                grid[i][j].x = 100+60*j;
-                grid[i][j].y = 100+60*i;
+        float dr = rFar-rNear;
+        dr = dr/200;
+        float dg = gFar-gNear;
+        dg = dg/200;
+        float db = bFar - bNear;
+        db = db/200;
 
-                shift_x = qrand() % 20;
-                shift_y = qrand() % 20;
-                grid[i][j].x += shift_x;
-                grid[i][j].y += shift_y;
-                drawable->setPixel(grid[i][j].x,grid[i][j].y,0xffffffff);
-            }
-        }
-        for(int i=0;i<=9;i++){
-            for(int j=0;j<=9;j++){
-                int r1 = qrand() % 256;
-                int g1 = qrand() % 256;
-                int b1 = qrand() % 256;
-                int r2 = qrand() % 256;
-                int g2 = qrand() % 256;
-                int b2 = qrand() % 256;
-                unsigned int colour1 = (0xff<<24)+((r1&0xff)<<16)+((g1&0xff)<<8)+(b1&0xff);
-                unsigned int colour2 = (0xff<<24)+((r2&0xff)<<16)+((g2&0xff)<<8)+(b2&0xff);
+        float z1_percentage = z1/2;
+        z1_percentage = z1_percentage/100;
+        float z2_percentage = z2/2;
+        z2_percentage = z2_percentage/100;
+        float z3_percentage = z3/2;
+        z3_percentage = z3_percentage/100;
 
-                if(j<9){
-                    draw_line_Bres(grid[i][j].x,grid[i][j].y,grid[i][j+1].x,grid[i][j+1].y,colour1,colour2);
-                }
-                if(i<9){
-                    draw_line_Bres(grid[i][j].x,grid[i][j].y,grid[i+1][j].x,grid[i+1][j].y,colour1,colour2);
-                }
-                if(i!=0 && i<9 && j<9){
-                    draw_line_Bres(grid[i][j].x,grid[i][j].y,grid[i-1][j+1].x,grid[i-1][j+1].y,colour1,colour2);
-                }
-            }
-        }
-    }
-    else { //filled = 1
-        qsrand(time(NULL)); // random seeding
-        struct pixel grid[10][10];
-        unsigned int colorgrid[10][10];
-        int shift_x;
-        int shift_y;
-        for(int i=0;i<=9;i++){
-            for(int j=0;j<=9;j++){
-                grid[i][j].x = 100+60*j;
-                grid[i][j].y = 100+60*i;
+        int r1 = round(rNear + dr*z1);
+        int g1 = round(gNear + dg*z1);
+        int b1 = round(bNear + db*z1);
+        int r2 = round(rNear + dr*z2);
+        int g2 = round(gNear + dg*z2);
+        int b2 = round(bNear + db*z2);
+        int r3 = round(rNear + dr*z3);
+        int g3 = round(gNear + dg*z3);
+        int b3 = round(bNear + db*z3);
 
-                shift_x = qrand() % 20;
-                shift_y = qrand() % 20;
-                grid[i][j].x += shift_x;
-                grid[i][j].y += shift_y;
+        unsigned int current_Color1 = (0xff<<24) + ((r1 & 0xff)<<16) + ((g1 & 0xff)<<8) + (b1 & 0xff);
+        unsigned int current_Color2 = (0xff<<24) + ((r2 & 0xff)<<16) + ((g2 & 0xff)<<8) + (b2 & 0xff);
+        unsigned int current_Color3 = (0xff<<24) + ((r3 & 0xff)<<16) + ((g3 & 0xff)<<8) + (b3 & 0xff);
 
-                int r = qrand() % 256;
-                int g = qrand() % 256;
-                int b = qrand() % 256;
-                unsigned int color = (0xff<<24)+((r&0xff)<<16)+((g&0xff)<<8)+(b&0xff);
-                colorgrid[i][j] = color;
-                drawable->setPixel(grid[i][j].x,grid[i][j].y,0xffffffff);
-            }
-        }
-        for(int i=0;i<=9;i++){
-            for(int j=0;j<=9;j++){
-                if(j<9 && i<9) {
-                    PolygonRenderer(grid[i][j].x, grid[i][j].y, grid[i][j+1].x, grid[i][j+1].y, grid[i+1][j].x, grid[i+1][j].y, colorgrid[i][j], colorgrid[i][j+1], colorgrid[i+1][j]);
-                    PolygonRenderer(grid[i+1][j+1].x, grid[i+1][j+1].y, grid[i][j+1].x, grid[i][j+1].y, grid[i+1][j].x, grid[i+1][j].y, colorgrid[i][j], colorgrid[i][j+1], colorgrid[i+1][j]);
-                }
-            }
-        }
+        PolygonRenderer(x1,y1,x2,y2,x3,y3,current_Color1,current_Color2,current_Color3);
     }
 }
 
-struct Client::matrix{
-    float mat[4][4];
-    matrix() {
-        for(int i = 0; i<4; i++){
-            for(int j = 0; j<4; j++){
-                if(i == j) {
-                    mat[i][j] = 1.0;
-                }
-                else {
-                    mat[i][j] = 0.0;
-                }
-            }
+
+
+
+bool Client::SimpDrawer(char* filename[], unsigned int nearColour, unsigned int farColour){
+    ifstream fin;
+
+    fin.open(filename[1]);// open simp file
+    if(fin.fail()){// check if open successfully
+        QTextStream(stdout) << "file open error.."<<endl;
+        return false;
+    }
+
+    const char* tempTok[MAX_TOKENS][MAX_TOKENS] = {}; // initialize to 0
+    int lineCount=0;
+    const char* token[MAX_TOKENS][MAX_TOKENS] = {};
+
+    while(!fin.eof()){
+        // read an entire line into memory
+        char buf[MAX_CHARS_PER_LINE];
+
+        fin.getline(buf, MAX_CHARS_PER_LINE);
+        // parse the line into blank-delimited tokens
+        int n = 0; // a for-loop index
+
+        tempTok[lineCount][n] = strtok(buf, DELIMITER); // first token
+
+        if (tempTok[lineCount][0]) // zero if line is blank
+        {
+          for (n = 1; n < MAX_TOKENS; n++)
+          {
+            tempTok[lineCount][n] = strtok(NULL, DELIMITER); // subsequent tokens
+            if (!tempTok[lineCount][n]) break; // no more tokens
+          }
         }
-    };
+
+        int i =0;
+        // process (print) the tokens
+        for (i; i < n; i++){
+          token[lineCount][i] = strdup(tempTok[lineCount][i]);
+        }
+        token[lineCount][i] = "~";
+        lineCount++;
+    }
+    fin.close();
+
+    std::stack<Mat>mstack;
+    Mat m;
+    mstack.push(m);
+    Mat world_m;
+    world_m.mat[0][0]=3.25;
+    world_m.mat[1][1]=3.25;
+    world_m.mat[0][3]=325;
+    world_m.mat[1][3]=325;
+
+    Mat projection_m;
+
+    bool fill = true;
+
+    int x1,x2,x3,y1,y2,y3,z1,z2,z3;// temp variables for assigning polygon
+
+
+    for(int j=0;j<lineCount;j++){
+
+        int i = 0; //command iteration
+        while(strcmp(token[j][i],"~")!=0){
+            if(strcmp(token[j][i],"#")==0){} // do nothing if the line is a comment
+            /////////////////
+            // CTM Section //
+            /////////////////
+            // want to only do one push per scope, so need to iterate through
+            else if((strcmp(token[j][i],"{"))==0){
+                Mat prev_m = mstack.top();
+                Mat m;
+                int k=j+1;
+                while((strcmp(token[k][i],"translate"))==0 || (strcmp(token[k][i],"scale"))==0 || (strcmp(token[k][i],"rotate"))==0){
+                    if((strcmp(token[k][i],"translate"))==0){
+                        m.mat[0][3]=m.mat[0][3]+atof(token[k][i+1]);
+                        m.mat[1][3]=m.mat[1][3]+atof(token[k][i+2]);
+                        m.mat[2][3]=m.mat[2][3]+atof(token[k][i+3]);
+                        k++;
+                    }
+                    else if((strcmp(token[k][i],"scale"))==0){
+                        Mat tempm;
+                        Mat tempResult;
+                        for(int ii=0;ii<4;ii++){
+                                for(int jj=0;jj<4;jj++){
+                                    tempResult.mat[ii][jj]=0;
+                                }
+                        }
+                        tempm.mat[0][0]=atof(token[k][i+1]);
+                        tempm.mat[1][1]=atof(token[k][i+2]);
+                        tempm.mat[2][2]=atof(token[k][i+3]);
+
+                        for(int ii=0;ii<4;ii++){
+                                for(int jj=0;jj<4;jj++){
+                                    for(int kk=0;kk<4;kk++){
+                                        tempResult.mat[ii][jj]+= m.mat[ii][kk]*tempm.mat[kk][jj];
+                                    }
+                                }
+                        }
+
+                        for(int ii=0;ii<4;ii++){
+                                for(int jj=0;jj<4;jj++){
+                                    m.mat[ii][jj]=tempResult.mat[ii][jj];
+                                }
+                        }
+                        k++;
+
+                    }
+                    else if((strcmp("rotate",token[k][i]))==0){
+                        Mat tempm;
+                        Mat tempResult;
+                        for(int ii=0;ii<4;ii++){
+                                for(int jj=0;jj<4;jj++){
+                                    tempResult.mat[ii][jj]=0;
+                                }
+                        }
+
+                        if ((strcmp(token[k][i+1],"X"))==0){
+                            tempm.mat[1][1]=cos(atof(token[k][i+2])*PI/180);
+                            tempm.mat[1][2]=-sin(atof(token[k][i+2])*PI/180);
+                            tempm.mat[2][1]=sin(atof(token[k][i+2])*PI/180);
+                            tempm.mat[2][2]=cos(atof(token[k][i+2])*PI/180);
+                        }
+                        else if((strcmp(token[k][i+1],"Y"))==0){
+                            tempm.mat[0][0]=cos(atof(token[k][i+2])*PI/180);
+                            tempm.mat[0][2]=sin(atof(token[k][i+2])*PI/180);
+                            tempm.mat[2][0]=-sin(atof(token[k][i+2])*PI/180);
+                            tempm.mat[2][2]=cos(atof(token[k][i+2])*PI/180);
+                        }
+                        else if((strcmp(token[k][i+1],"Z"))==0){
+                            tempm.mat[0][0]=cos(atof(token[k][i+2])*PI/180);
+                            tempm.mat[0][1]=-sin(atof(token[k][i+2])*PI/180);
+                            tempm.mat[1][0]=sin(atof(token[k][i+2])*PI/180);
+                            tempm.mat[1][1]=cos(atof(token[k][i+2])*PI/180);
+                        }
+
+                        for(int ii=0;ii<4;ii++){
+                                for(int jj=0;jj<4;jj++){
+                                    for(int kk=0;kk<4;kk++){
+                                        tempResult.mat[ii][jj]+= m.mat[ii][kk]*tempm.mat[kk][jj];
+                                    }
+                                }
+                        }
+
+                        for(int ii=0;ii<4;ii++){
+                                for(int jj=0;jj<4;jj++){
+                                    m.mat[ii][jj]=tempResult.mat[ii][jj];
+                                }
+                        }
+                        k++;
+                    }
+                    else{
+                        break;
+                    }
+                }
+
+                // multiply the current CTM by the previous CTM
+                Mat tempResult;
+                for(int ii=0;ii<4;ii++){
+                        for(int jj=0;jj<4;jj++){
+                            tempResult.mat[ii][jj]=m.mat[ii][jj];
+                            m.mat[ii][jj] = 0;
+                        }
+                }
+                for(int ii=0;ii<4;ii++){
+                        for(int jj=0;jj<4;jj++){
+                            for(int kk=0;kk<4;kk++){
+                                m.mat[ii][jj]+= tempResult.mat[ii][kk]*prev_m.mat[kk][jj];
+                            }
+                        }
+                }
+                // always push
+                mstack.push(m);
+                i++;
+            }
+            else if((strcmp(token[j][i],"}"))==0){
+                // always pop
+                mstack.pop();
+                i++;
+
+            }
+
+            ////////////////
+            // wire/frame //
+            ////////////////
+            else if((strcmp(token[j][i],"wire"))==0){
+                fill = false;
+                i++;
+            }
+            else if((strcmp(token[j][i],"filled"))==0){
+                fill = true;
+                i++;
+            }
+
+            ////////////////////
+            // Render Section //
+            ////////////////////
+            else if((strcmp(token[j][i],"polygon"))==0){
+                Mat tempResult;
+                Mat tempResult2;
+                Mat CTM;
+                for(int ii=0;ii<4;ii++){
+                    for(int jj=0;jj<4;jj++){
+                        tempResult.mat[ii][jj]=mstack.top().mat[ii][jj];
+                        CTM.mat[ii][jj]=0;
+                        tempResult2.mat[ii][jj]=0;
+                    }
+                }
+
+                for(int ii=0;ii<4;ii++){
+                    for(int jj=0;jj<4;jj++){
+                        for(int kk=0;kk<4;kk++){
+                            tempResult2.mat[ii][jj]+= world_m.mat[ii][kk]*tempResult.mat[kk][jj];
+                        }
+                    }
+                }
+
+                for(int ii=0;ii<4;ii++){
+                    for(int jj=0;jj<4;jj++){
+                        for(int kk=0;kk<4;kk++){
+                            CTM.mat[ii][jj]+= projection_m.mat[ii][kk]*tempResult2.mat[kk][jj];
+                        }
+                    }
+                }
+
+//                for(int ii=0;ii<4;ii++){
+//                    for(int jj=0;jj<4;jj++){
+//                        for(int kk=0;kk<4;kk++){
+//                            CTM.mat[ii][jj]+= world_m.mat[ii][kk]*tempResult.mat[kk][jj];
+//                        }
+//                    }
+//                }
+
+                for(int ii=0;ii<4;ii++){
+                    for(int jj=0;jj<4;jj++){
+                        QTextStream(stdout) << CTM.mat[ii][jj] << " ";
+                    }
+                    QTextStream(stdout) << " " << endl;
+                }
+                QTextStream(stdout) << " " << endl;
+
+                float temp_x1 = atof(token[j][i+1]);
+                float temp_y1 = atof(token[j][i+2]);
+                float temp_z1 = atof(token[j][i+3]);
+                float temp_x2 = atof(token[j][i+4]);
+                float temp_y2 = atof(token[j][i+5]);
+                float temp_z2 = atof(token[j][i+6]);
+                float temp_x3 = atof(token[j][i+7]);
+                float temp_y3 = atof(token[j][i+8]);
+                float temp_z3 = atof(token[j][i+9]);
+
+                x1 = temp_x1*CTM.mat[0][0]+temp_y1*CTM.mat[0][1]+temp_z1*CTM.mat[0][2]+CTM.mat[0][3];
+                y1 = temp_x1*CTM.mat[1][0]+temp_y1*CTM.mat[1][1]+temp_z1*CTM.mat[1][2]+CTM.mat[1][3];
+                z1 = temp_x1*CTM.mat[2][0]+temp_y1*CTM.mat[2][1]+temp_z1*CTM.mat[2][2]+CTM.mat[2][3];
+                x2 = temp_x2*CTM.mat[0][0]+temp_y2*CTM.mat[0][1]+temp_z2*CTM.mat[0][2]+CTM.mat[0][3];
+                y2 = temp_x2*CTM.mat[1][0]+temp_y2*CTM.mat[1][1]+temp_z2*CTM.mat[1][2]+CTM.mat[1][3];
+                z2 = temp_x2*CTM.mat[2][0]+temp_y2*CTM.mat[2][1]+temp_z2*CTM.mat[2][2]+CTM.mat[2][3];
+                x3 = temp_x3*CTM.mat[0][0]+temp_y3*CTM.mat[0][1]+temp_z3*CTM.mat[0][2]+CTM.mat[0][3];
+                y3 = temp_x3*CTM.mat[1][0]+temp_y3*CTM.mat[1][1]+temp_z3*CTM.mat[1][2]+CTM.mat[1][3];
+                z3 = temp_x3*CTM.mat[2][0]+temp_y3*CTM.mat[2][1]+temp_z3*CTM.mat[2][2]+CTM.mat[2][3];
+
+                if(fill==true){
+                    depthCuePolygon(x1,y1,z1,x2,y2,z2,x3,y3,z3,nearColour,farColour);
+                }
+                else{
+                    draw_line_Bres(x1,y1,x2,y2,0xffffffff,0xffffffff);
+                    draw_line_Bres(x1,y1,x3,y3,0xffffffff,0xffffffff);
+                    draw_line_Bres(x2,y2,x3,y3,0xffffffff,0xffffffff);
+                }
+
+                i++;
+            }
+            else if((strcmp(token[j][i],"mesh"))==0){
+                Mat tempResult;
+                Mat CTM;
+                for(int ii=0;ii<4;ii++){
+                    for(int jj=0;jj<4;jj++){
+                        tempResult.mat[ii][jj]=mstack.top().mat[ii][jj];
+                        CTM.mat[ii][jj]=0;
+                    }
+                }
+
+                for(int ii=0;ii<4;ii++){
+                        for(int jj=0;jj<4;jj++){
+                            for(int kk=0;kk<4;kk++){
+                                CTM.mat[ii][jj]+= world_m.mat[ii][kk]*tempResult.mat[kk][jj];
+                            }
+                        }
+                }
+
+                meshDrawer(token[j][i+1], CTM,nearColour,farColour);
+                i++;
+            }
+            else if((strcmp(token[j][i],"camera"))==0){
+                float xlo, ylo, hither, xhi, yhi, yon;
+                xlo = atof(token[j][i+1]);
+                QTextStream(stdout) << "xlo " << xlo << endl;
+                ylo = atof(token[j][i+2]);
+                QTextStream(stdout) << "ylo " << ylo << endl;
+                xhi = atof(token[j][i+3]);
+                QTextStream(stdout) << "xhi " << xhi << endl;
+                yhi = atof(token[j][i+4]);
+                QTextStream(stdout) << "yhi " << yhi << endl;
+                hither = atof(token[j][i+5]);
+                QTextStream(stdout) << "hither " << hither << endl;
+                yon = atof(token[j][i+6]);
+                QTextStream(stdout) << "yon " << yon << endl;
+
+//                projection_m = projection(xlo, ylo, hither, xhi, yhi, yon);
+
+                projection_m.mat[0][0] = (2*hither)/(xhi-xlo);
+                projection_m.mat[0][2] = (xhi+xlo)/(xhi-xlo);
+                projection_m.mat[1][1] = (2*hither)/(yhi-ylo);
+                projection_m.mat[1][2] = (yhi+ylo)/(yhi-ylo);
+                projection_m.mat[2][2] = (yon + hither)/(yon-hither);
+                projection_m.mat[2][3] = (2*yon*hither)/(yon-hither);
+                projection_m.mat[3][2] = 1;
+                projection_m.mat[3][3] = 0;
+
+                j++;
+            }
+            else break;
+
+        }
+    }
+
+    return true;
+}
+
+struct Client::MeshCoord{
+    int x;
+    int y;
+    int z;
 };
+typedef struct MeshCoord MeshCoord;
 
-typedef struct matrix matrix;
+//Mat Client::projection(int xlo, int ylo, int hither, int xhi, int yhi, int yon){
+////    float xc, yc, zc, wc;
+////    float xp, yp;
+////    float xn, yn, zn;
+////    float n = hither;
+
+////    xp = (n*xe)/ze;
+////    yp = (n*ye)/ze;
+
+////    xn = (2*xp)/(xhi-xlo);
+////    yn = (2*yp)/(yhi-ylo);
 
 
-bool Client::SimpDrawer(const char* filename){
+//    Mat projection_m;
+//    projection_m.mat[0][0] = (2*hither)/(xhi-xlo);
+//    projection_m.mat[0][2] = (xhi+xlo)/(xhi-xlo);
+//    projection_m.mat[1][1] = (2*hither)/(yhi-ylo);
+//    projection_m.mat[1][2] = (yhi+ylo)/(yhi-ylo);
+//    projection_m.mat[2][2] = (yon + hither)/(yon-hither);
+//    projection_m.mat[2][3] = (2*yon*hither)/(yon-hither);
+//    projection_m.mat[3][2] = -1;
+//    projection_m.mat[3][3] = 0;
+
+//    return projection_m;
+//}
+
+bool Client::meshDrawer(const char* filename, Mat m, unsigned int nearColor, unsigned int farColor) {
     ifstream fin;
 
     fin.open(filename);// open simp file
@@ -868,203 +1303,52 @@ bool Client::SimpDrawer(const char* filename){
           else {
               realtoken[linecount][i] = "endofline";
           }
-          QTextStream(stdout) << "RealToken[" << linecount << "]["<<i<<"] = " << realtoken[linecount][i] << endl;
+//          QTextStream(stdout) << "RealToken[" << linecount << "]["<<i<<"] = " << realtoken[linecount][i] << endl;
         }
         linecount++;
     }
 
     fin.close();
 
-    std::stack<matrix> matstack;
-    matrix mat;
-    matstack.push(mat);
-    int test = 0;
-    int p = 0;
-    bool filled=false;
-    int x1, y1, z1, x2, y2, z2, x3, y3, z3;
+    int row = atoi(realtoken[0][0]);
+    int col = atoi(realtoken[1][0]);
 
-    for(int line = 0; line<linecount; line++) {
-        p = 0;
-        while(realtoken[line][p] != "endofline") {
-            if(strcmp(realtoken[line][p], "#") == 0) {
 
-            }
-            else if(strcmp(realtoken[line][p], "{") == 0) {
-                matrix last_mat = matstack.top();
-                matrix mat;
-                int q = line+1;
-                line++;
+    meshPixel grid_points[row][col];
+    int colCounter=2;
 
-                while(strcmp(realtoken[line][p], "translate") == 0 || strcmp(realtoken[line][p], "scale") == 0 || strcmp(realtoken[line][p], "rotate") == 0){
-                    //Translation
-                    if((strcmp(realtoken[line][p], "translate") == 0)) {
-                        QTextStream(stdout)<<"TRANSLATE Token: "<<realtoken[line][p]<<endl;
-                        mat.mat[0][3]=mat.mat[0][3]+atof(realtoken[line][p+1]);
-                        mat.mat[1][3]=mat.mat[1][3]+atof(realtoken[line][p+2]);
-                        mat.mat[2][3]=mat.mat[2][3]+atof(realtoken[line][p+3]);
+    for(int i=0; i<row;i++){
+        for(int j=0;j<col;j++){
+            grid_points[i][j].x = atoi(realtoken[colCounter][0]);
+            grid_points[i][j].y = atoi(realtoken[colCounter][1]);
+            grid_points[i][j].z = atoi(realtoken[colCounter][2]);
+            colCounter++;
 
-                        line++; //transition to next row of tokens
-                    }
-                    //Scale
-                    else if((strcmp(realtoken[line][p], "scale") == 0)) {
-                        matrix scalemat;
-                        matrix temp_mat;
-                        for(int i=0;i<4;i++){ //Used for intermediate calculation of multiplying matrices
-                                for(int j=0;j<4;j++){
-                                    temp_mat.mat[i][j]=mat.mat[i][j];
-                                }
-                        }
-                        for(int i = 0; i<4; i++) {
-                            for(int j = 0; j<4; j++) {
-                                if (i == j) {
-                                    scalemat.mat[i][j] = atof(realtoken[line][p]);
-                                    p++;
-                                }
-                                else {
-                                    scalemat.mat[i][j] = 0.0;
-                                }
-                            }
-                        }
-                        for(int i = 0; i<4; i++){
-                            for(int j = 0; j<4; j++) {
-                                for(int k = 0; k< 4; k++) {
-                                    mat.mat[i][j] = temp_mat.mat[i][k] * scalemat.mat[k][j];
-                                }
-                            }
-                        }
-                        line++; //transition to next row of tokens
-                    }
-                    else {
-                        break;
-                    }
-                    QTextStream(stdout)<<"Token: "<<realtoken[line][p]<<endl;
-                }
+        }
+//        QTextStream(stdout)<<" "<<endl;
+    }
 
-                //Combine new CTM with previous CTM
-                matrix temp_mat;
-                for(int i = 0; i<4; i++) {
-                    for(int j = 0; j<4; j++) {
-                        temp_mat.mat[i][j]=mat.mat[i][j];
-                        mat.mat[i][j] = 0;
-                    }
-                }
-                for(int i=0;i<4;i++){
-                    for(int j=0;j<4;j++){
-                        for(int k=0;k<4;k++){
-                            mat.mat[i][j]+= temp_mat.mat[i][k]*last_mat.mat[k][j];
-                        }
-                    }
-                }
+     //transform the grid points by CTM
+    for(int i=0; i<row; i++){
+        for(int j=0;j<col;j++){
+            float temp_x1 = grid_points[i][j].x;
+            float temp_y1 = grid_points[i][j].y;
+            float temp_z1 = grid_points[i][j].z;
 
-                matstack.push(mat);
-            }
+            grid_points[i][j].x = temp_x1*m.mat[0][0]+temp_y1*m.mat[0][1]+temp_z1*m.mat[0][2]+m.mat[0][3];
+            grid_points[i][j].y = temp_x1*m.mat[1][0]+temp_y1*m.mat[1][1]+temp_z1*m.mat[1][2]+m.mat[1][3];
+            grid_points[i][j].z = temp_x1*m.mat[2][0]+temp_y1*m.mat[2][1]+temp_z1*m.mat[2][2]+m.mat[2][3];
 
-            else if((strcmp(realtoken[line][p],"}"))==0){
-                //We pop to restore previous CTM
-                matstack.pop();
-                p++;
-            }
-
-            else if(strcmp(realtoken[line][p], "polygon") == 0) {
-                matrix CTM;
-                for(int i = 0; i<4; i++) {
-                    for(int j = 0; j<4; j++) {
-                        CTM.mat[i][j] = matstack.top().mat[i][j];
-                    }
-                }
-                x1 = atof(token[line][p+1])*CTM.mat[0][0]+atof(token[line][p+2])*CTM.mat[0][1]+atof(token[line][p+3])*CTM.mat[0][2]+CTM.mat[0][3];
-                y1 = atof(token[line][p+1])*CTM.mat[1][0]+atof(token[line][p+2])*CTM.mat[1][1]+atof(token[line][p+3])*CTM.mat[1][2]+CTM.mat[1][3];
-                z1 = atof(token[line][p+1])*CTM.mat[2][0]+atof(token[line][p+2])*CTM.mat[2][1]+atof(token[line][p+3])*CTM.mat[2][2]+CTM.mat[2][3];
-                x2 = atof(token[line][p+4])*CTM.mat[0][0]+atof(token[line][p+5])*CTM.mat[0][1]+atof(token[line][p+6])*CTM.mat[0][2]+CTM.mat[0][3];
-                y2 = atof(token[line][p+4])*CTM.mat[1][0]+atof(token[line][p+5])*CTM.mat[1][1]+atof(token[line][p+6])*CTM.mat[1][2]+CTM.mat[1][3];
-                z2 = atof(token[line][p+4])*CTM.mat[2][0]+atof(token[line][p+5])*CTM.mat[2][1]+atof(token[line][p+6])*CTM.mat[2][2]+CTM.mat[2][3];
-                x3 = atof(token[line][p+7])*CTM.mat[0][0]+atof(token[line][p+8])*CTM.mat[0][1]+atof(token[line][p+9])*CTM.mat[0][2]+CTM.mat[0][3];
-                y3 = atof(token[line][p+7])*CTM.mat[1][0]+atof(token[line][p+8])*CTM.mat[1][1]+atof(token[line][p+9])*CTM.mat[1][2]+CTM.mat[1][3];
-                z3 = atof(token[line][p+7])*CTM.mat[2][0]+atof(token[line][p+8])*CTM.mat[2][1]+atof(token[line][p+9])*CTM.mat[2][2]+CTM.mat[2][3];
-
-                if(filled){
-                    PolygonRenderer(x1,y1,x2,y2,x3,y3,0xffffffff,0xffffffff,0xffffffff);
-                }
-                else{
-                    draw_line_Bres(x1,y1,x2,y2,0xffffffff,0xffffffff);
-                    draw_line_Bres(x1,y1,x3,y3,0xffffffff,0xffffffff);
-                    draw_line_Bres(x2,y2,x3,y3,0xffffffff,0xffffffff);
-                }
-                p+=10;
-
-                test++;
-            }
-            else if(strcmp(realtoken[line][p], "mesh") == 0) {
-                p++;
-
-            }
-            else {
-                break;
+        }
+    }
+    for(int i=0; i<row;i++){
+        for (int j=0;j<col-1;j++){
+            if(j<col && i<row-1){
+                depthCuePolygon(grid_points[i][j].x,grid_points[i][j].y,grid_points[i][j].z,grid_points[i][j+1].x,grid_points[i][j+1].y,grid_points[i][j+1].z,grid_points[i+1][j].x,grid_points[i+1][j].y,grid_points[i+1][j].z,nearColor,farColor);
+                depthCuePolygon(grid_points[i+1][j].x,grid_points[i+1][j].y,grid_points[i+1][j].z,grid_points[i+1][j+1].x,grid_points[i+1][j+1].y,grid_points[i+1][j+1].z,grid_points[i][j+1].x,grid_points[i][j+1].y,grid_points[i][j+1].z,nearColor,farColor);
             }
         }
     }
     return true;
-}
-
-bool Client::meshDrawer(const char* filename, mat m) {
-    ifstream fin;
-
-    fin.open((char*)filename);// open mesh file
-    if(fin.fail()){// check if open successfully
-        QTextStream(stdout) << "file open error.."<<endl;
-        return false;
-    }
-
-    const char* tempTok[MAX_TOKENS][MAX_TOKENS] = {}; // initialize to 0
-    int lineCount=0;
-    const char* token[MAX_TOKENS][MAX_TOKENS] = {};
-
-    while(!fin.eof()){
-        // read an entire line into memory
-        char buf[MAX_CHARS_PER_LINE];
-
-        fin.getline(buf, MAX_CHARS_PER_LINE);
-        // parse the line into blank-delimited tokens
-        int n = 0; // a for-loop index
-
-        tempTok[lineCount][n] = strtok(buf, DELIMITER); // first token
-
-        if (tempTok[lineCount][0]) // zero if line is blank
-        {
-          for (n = 1; n < MAX_TOKENS; n++)
-          {
-            tempTok[lineCount][n] = strtok(NULL, DELIMITER); // subsequent tokens
-            if (!tempTok[lineCount][n]) break; // no more tokens
-          }
-        }
-
-        int i =0;
-        // process (print) the tokens
-        for (i; i < n; i++){
-//          QTextStream(stdout) << "Token[" << lineCount << "]["<<i<<"] = " << tempTok[lineCount][i] << endl;
-          token[lineCount][i] = strdup(tempTok[lineCount][i]);
-        }
-        token[lineCount][i] = "~";
-        lineCount++;
-    }
-
-    fin.close();
-    //////////////////////
-    // parsing complete //
-    //////////////////////
-
-    int row = atoi(token[0][0]);
-    int col = atoi(token[1][0]);
-    int meshSize = row*col;
-
-    meshPixel gird_points[row][col];
-
-
-
-
-
-
-    return true;
-}
 }
 
