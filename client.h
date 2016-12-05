@@ -13,6 +13,8 @@ public:
     struct Mat;
     struct MeshCoord;
     struct meshPixel;
+    struct vec3;
+    struct rgbvec;
 
 private:
     Drawable *drawable;
@@ -27,6 +29,10 @@ private:
     bool meshDrawer(const char* filename, Mat m, unsigned int nearColor, unsigned int farColor);
     void depthCuePolygon(int x1,int y1,int z1, int x2, int y2, int z2, int x3, int y3, int z3, unsigned int nearColor, unsigned int farColor);
 //    Mat projection(int xlo, int ylo, int hither, int xhi, int yhi, int yon);
+    rgbvec phong(vec3 point, float A, float B, rgbvec I_a, rgbvec I_i, vec3 lightsource, vec3 eye, vec3 N, rgbvec kd, float ks, float alpha);
+    vec3 normalize(vec3 vec);
+    float dotproduct(vec3 vec1, vec3 vec2);
+    float veclength(vec3 vec1, vec3 vec2);
 };
 
 #endif // CLIENT_H

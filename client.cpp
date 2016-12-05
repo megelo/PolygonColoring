@@ -45,6 +45,20 @@ struct Client::meshPixel{
 };
 typedef struct meshPixel meshPixel;
 
+struct Client::vec3{
+    float x;
+    float y;
+    float z;
+};
+typedef struct vec3 vec3;
+
+struct Client::rgbvec{
+    int r;
+    int g;
+    int b;
+};
+typedef struct rgbvec rgbvec;
+
 Client::Client(Drawable *drawable, char *argv[])
 {
     this->drawable = drawable;
@@ -894,7 +908,87 @@ void Client::depthCuePolygon(int x1,int y1,int z1, int x2, int y2, int z2, int x
 }
 
 
+Client::rgbvec Client::phong(vec3 point, float A, float B, rgbvec I_a, rgbvec I_i, vec3 lightsource, vec3 eye, vec3 N, rgbvec kd, float ks, float alpha){
+    rgbvec I_eye;
+    rgbvec part1;
+    vec3 L, V, R;
 
+
+    part1.r = kd.r * I_a.r/255;
+    part1.g = kd.g * I_a.g/255;
+    part1.b = kd.b * I_a.b/255;
+
+    //Light direction vector
+    L.x = lightsource.x - point.x;
+    L.y = lightsource.y - point.y;
+    L.z = lightsource.z - point.z;
+
+    //View vector
+    V.x = eye.x - point.x;
+    V.y = eye.y - point.y;
+    V.z = eye.z - point.z;
+
+
+    vec3 norm_L, norm_N, norm_V, norm_R;
+    norm_L = normalize(L);
+    norm_N = normalize(N);
+    norm_V = normalize(V);
+    float dp_NL = dotproduct(norm_L, norm_N);
+    norm_R.x = 2*dp_NL*norm_N.x - norm_L.x;
+    norm_R.y = 2*dp_NL*norm_N.y - norm_L.x;
+    norm_R.z = 2*dp_NL*norm_N.z - norm_L.x;
+
+    float di = veclength(lightsource, point);
+    float fatt = 1/(A+B*di);
+
+    rgbvec part2;
+    part2.r = kd.r * dp_NL;
+    part2.g = kd.g * dp_NL;
+    part2.b = kd.b * dp_NL;
+    rgbvec part3;
+    part3.r = ks * kd.r * pow(dotproduct(norm_V, norm_R), alpha);
+    part3.g = ks * kd.g * pow(dotproduct(norm_V, norm_R), alpha);
+    part3.b = ks * kd.b * pow(dotproduct(norm_V, norm_R), alpha);
+
+    I_eye.r = part1.r + I_i.r * fatt * (part2.r + part3.r)/255;
+    I_eye.g = part1.g + I_i.g * fatt * (part2.g + part3.g)/255;
+    I_eye.b = part1.b + I_i.b * fatt * (part2.b + part3.b)/255;
+
+
+    return I_eye;
+
+}
+
+float Client::dotproduct(vec3 vec1, vec3 vec2){
+    float dp;
+    dp = vec1.x*vec2.x + vec1.y*vec2.y + vec1.z*vec2.z;
+    return dp;
+}
+
+float Client::veclength(vec3 vec1, vec3 vec2){
+    float vector_length;
+    vec3 vec;
+    vec.x = vec1.x - vec2.x;
+    vec.y = vec1.y - vec2.y;
+    vec.z = vec1.z - vec2.z;
+
+    vector_length = sqrt(vec.x*vec.x + vec.y*vec.y + vec.z*vec.z);
+    return vector_length;
+}
+
+Client::vec3 Client::normalize(vec3 vec){
+    vec3 vector_norm;
+    float vector_length = sqrt(vec.x*vec.x + vec.y*vec.y + vec.z*vec.z);
+    vector_norm.x = vec.x/vector_length;
+    vector_norm.y = vec.y/vector_length;
+    vector_norm.z = vec.z/vector_length;
+
+    return vector_norm;
+}
+
+//void Client::phong(float fatt, float I_a, float I_i, float N, float L, float V, float R, float kd, float ks, float alpha){
+
+//}
 
 bool Client::SimpDrawer(char* filename[], unsigned int nearColour, unsigned int farColour){
     ifstream fin;
@@ -942,10 +1036,10 @@ bool Client::SimpDrawer(char* filename[], unsigned int nearColour, unsigned int 
     Mat m;
     mstack.push(m);
     Mat world_m;
-    world_m.mat[0][0]=3.25;
-    world_m.mat[1][1]=3.25;
-    world_m.mat[0][3]=325;
-    world_m.mat[1][3]=325;
+    world_m.mat[0][0]=3.75;
+    world_m.mat[1][1]=3.75;
+    world_m.mat[0][3]=375;
+    world_m.mat[1][3]=375;
 
     Mat projection_m;
 
@@ -1212,6 +1306,28 @@ bool Client::SimpDrawer(char* filename[], unsigned int nearColour, unsigned int 
                 projection_m.mat[2][3] = (2*yon*hither)/(yon-hither);
                 projection_m.mat[3][2] = 1;
                 projection_m.mat[3][3] = 0;
+
+                j++;
+            }
+            else if((strcmp(token[j][i],"ambient"))==0){
+                float amb_r, amb_g, amb_b;
+                amb_r = atof(token[j][i+1]);
+                amb_g = atof(token[j][i+2]);
+                amb_b = atof(token[j][i+3]);
+
+                j++;
+            }
+            else if((strcmp(token[j][i],"surface"))==0){
+                float s_r, s_g, s_b;
+                s_r = atof(token[j][i+1]);
+                s_g = atof(token[j][i+2]);
+                s_b = atof(token[j][i+3]);
+
+                float ks; //Specular coefficient - Defaults to 0.3
+                ks = atof(token[j][i+4]);
+
+                float alpha; //Specular exponent - Defaults to 8
+                alpha = atof(token[j][i+5]);
 
                 j++;
             }
