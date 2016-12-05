@@ -455,7 +455,10 @@ int Client::Distance(int x1, int y1, int x2, int y2){
     return sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
 }
 
-void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float xx3, float yy3, unsigned int color1, unsigned int color2, unsigned int color3){
+void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float xx3, float yy3, unsigned int color1, unsigned int color2, unsigned int color3, vec3 normalvector){
+    // Create normalized normal vector for Phong
+    vec3 norm_N = normalize(normalvector);
+    vec3 point;
     // initialize edge case for vertical lines
     bool VertLine_p1p2 = false;
     bool VertLine_p1p3 = false;
@@ -572,6 +575,7 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
 
     unsigned int current_Color1, current_Color2, current_Color3;
 
+
     drawable->setPixel(x1,y1,color1);
 
 
@@ -624,6 +628,10 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
                 long_rounded_b = round(temp_long_b);
 
                 current_Color1 = (0xff<<24) + ((long_rounded_r & 0xff)<<16) + ((long_rounded_g & 0xff)<<8) + (long_rounded_b & 0xff);
+
+                point.x =
+
+                phong()
 
                 if(x<=x3){
                     if(!VertLine_p1p3){
@@ -899,11 +907,16 @@ void Client::depthCuePolygon(int x1,int y1,int z1, int x2, int y2, int z2, int x
         int g3 = round(gNear + dg*z3);
         int b3 = round(bNear + db*z3);
 
+        vec3 normalvector;
+        normalvector.x = x2 - x1;
+        normalvector.y = y2 - y1;
+        normalvector.z = z2 - z1;
+
         unsigned int current_Color1 = (0xff<<24) + ((r1 & 0xff)<<16) + ((g1 & 0xff)<<8) + (b1 & 0xff);
         unsigned int current_Color2 = (0xff<<24) + ((r2 & 0xff)<<16) + ((g2 & 0xff)<<8) + (b2 & 0xff);
         unsigned int current_Color3 = (0xff<<24) + ((r3 & 0xff)<<16) + ((g3 & 0xff)<<8) + (b3 & 0xff);
 
-        PolygonRenderer(x1,y1,x2,y2,x3,y3,current_Color1,current_Color2,current_Color3);
+        PolygonRenderer(x1,y1,x2,y2,x3,y3,current_Color1,current_Color2,current_Color3, normalvector);
     }
 }
 

@@ -24,7 +24,7 @@ private:
     void draw_blerp(int x1, int y1, int x2, int y2, int x3, int y3, unsigned int color1, unsigned int color2, unsigned int color3);
     float linelength(float x1, float y1, float x2, float y2);
     int Distance(int x1, int y1, int x2, int y2);
-    void PolygonRenderer(float xx1, float yy1, float xx2, float yy2, float xx3, float yy3, unsigned int color1, unsigned int color2, unsigned int color3);
+    void PolygonRenderer(float xx1, float yy1, float xx2, float yy2, float xx3, float yy3, unsigned int color1, unsigned int color2, unsigned int color3, vec3 normalvector);
     bool SimpDrawer(char* filename[], unsigned int nearColor, unsigned int farColor);
     bool meshDrawer(const char* filename, Mat m, unsigned int nearColor, unsigned int farColor);
     void depthCuePolygon(int x1,int y1,int z1, int x2, int y2, int z2, int x3, int y3, int z3, unsigned int nearColor, unsigned int farColor);
