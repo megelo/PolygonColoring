@@ -190,6 +190,7 @@ DIST          = ../../../Qt/5.7/gcc_64/mkspecs/features/spec_pre.prf \
 		../../../Qt/5.7/gcc_64/mkspecs/features/qt_config.prf \
 		../../../Qt/5.7/gcc_64/mkspecs/linux-g++/qmake.conf \
 		../../../Qt/5.7/gcc_64/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		../../../Qt/5.7/gcc_64/mkspecs/features/exclusive_builds.prf \
 		../../../Qt/5.7/gcc_64/mkspecs/features/default_pre.prf \
 		../../../Qt/5.7/gcc_64/mkspecs/features/resolve_config.prf \
@@ -357,6 +358,7 @@ Makefile: qtqt.pro ../../../Qt/5.7/gcc_64/mkspecs/linux-g++/qmake.conf ../../../
 		../../../Qt/5.7/gcc_64/mkspecs/features/qt_config.prf \
 		../../../Qt/5.7/gcc_64/mkspecs/linux-g++/qmake.conf \
 		../../../Qt/5.7/gcc_64/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		../../../Qt/5.7/gcc_64/mkspecs/features/exclusive_builds.prf \
 		../../../Qt/5.7/gcc_64/mkspecs/features/default_pre.prf \
 		../../../Qt/5.7/gcc_64/mkspecs/features/resolve_config.prf \
@@ -510,6 +512,7 @@ Makefile: qtqt.pro ../../../Qt/5.7/gcc_64/mkspecs/linux-g++/qmake.conf ../../../
 ../../../Qt/5.7/gcc_64/mkspecs/features/qt_config.prf:
 ../../../Qt/5.7/gcc_64/mkspecs/linux-g++/qmake.conf:
 ../../../Qt/5.7/gcc_64/mkspecs/features/spec_post.prf:
+.qmake.stash:
 ../../../Qt/5.7/gcc_64/mkspecs/features/exclusive_builds.prf:
 ../../../Qt/5.7/gcc_64/mkspecs/features/default_pre.prf:
 ../../../Qt/5.7/gcc_64/mkspecs/features/resolve_config.prf:

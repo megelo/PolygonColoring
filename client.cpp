@@ -134,6 +134,146 @@ void Client::draw_rect(int x1, int y1, int x2, int y2, unsigned int color) {
     }
 }
 
+//void Client::bresenham(vec3 p1, vec3 p2, unsigned int color){
+//    float px, py, pz;
+//    px = abs(p2.x - p1.x);
+//    py = abs(p2.y - p1.y);
+//    pz = abs(p2.z - p1.z);
+
+//    float d;
+//    d = max(max(px, py), pz) + 1;
+
+//    float X[d] = {0};
+//    float Y[d] = {0};
+//    float Z[d] = {0};
+
+//    float x1, y1, z1;
+//    float x2, y2, z2;
+
+//    x1 = p1.x;
+//    y1 = p1.y;
+//    z1 = p1.z;
+
+//    x2 = p2.x;
+//    y2 = p2.y;
+//    z2 = p2.z;
+
+//    float dx, dy, dz;
+
+//    dx = x2 - x1;
+//    dy = y2 - y1;
+//    dz = z2 - z1;
+
+//    float ax, ay ,az;
+
+//    ax = abs(dx) * 2;
+//    ay = abs(dy) * 2;
+//    az = abs(dz) * 2;
+
+//    float sx, sy, sz;
+
+//    if(dx > 0) {sx = 1;}
+//    else if (dx==0) {sx = 0;}
+//    else {sx = -1;}
+
+//    if(dy > 0) {sy = 1;}
+//    else if (dy==0) {sy = 0;}xlo
+//    else {sy = -1;}
+
+//    if(dz > 0) {sz = 1;}
+//    else if (dz==0) {sz = 0;}
+//    else {sz = -1;}
+
+//    float x, y, z;
+
+//    x = x1;
+//    y = y1;
+//    z = z1;
+
+//    float idx = 1;
+//    float xd, yd, zd;
+
+//    if(ax>max(ay,az)){
+//        yd = ay - ax/2;
+//        zd = az - ax/2;
+
+//        while(true){
+//            X[idx] = x;
+//            Y[idx] = y;
+//            Z[idx] = z;
+//            idx++;
+
+//            if(x == x2){
+//                break;
+//            }
+
+//            if(yd >= 0){
+//                y = y + sy;
+//                yd = yd - ax;
+//            }
+//            if(zd >= 0){
+//                z = z + sz;
+//                zd = zd - ax;
+//            }
+//            x = x + sx;
+//            yd = yd + ay;
+//            zd + zd + az;
+//        }
+//    }
+//    else if (ay>=max(ax,az)){
+//        xd = ax - ay/2;
+//        zd = az - ay/2;
+
+//        while(true){
+//            X[idx] = x;
+//            Y[idx] = y;
+//            Z[idx] = z;
+//            idx++;
+
+//            if(y == y2){
+//                break;
+//            }
+//            if(xd >= 0){
+//                x = x + sx;
+//                xd = xd -ay;
+//            }
+//            if(zd >= 0){
+//                z = z + sz;
+//                zd = zd - ay;
+//            }
+//            y = y + sy;
+//            xd = xd + ax;
+//            zd = zd + az;
+//        }
+//    }
+//    else if (az>=max(ax,ay)){
+//        xd = ax - az/2;
+//        yd = ay - az/2;
+
+//        while(true) {
+//            X[idx] = x;
+//            Y[idx] = y;
+//            Z[idx] = z;
+//            idx++;
+
+//            if(z==z2){
+//                break;
+//            }
+//            if(xd >= 0){
+//                x = x + sx;
+//                xd = xd - az;
+//            }
+//            if(yd >= 0){
+//                y = y + sy;
+//                yd = yd - az;
+//            }
+//            z = z + sz;
+//            xd = xd + ax;
+//            yd = yd + ay;
+//        }
+//    }
+//}
+
 void Client::draw_line_Bres(int x1, int y1, int x2, int y2, unsigned int color1, unsigned int color2){
     int dx = x2-x1;
     if(x1>x2) {
@@ -455,10 +595,7 @@ int Client::Distance(int x1, int y1, int x2, int y2){
     return sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
 }
 
-void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float xx3, float yy3, unsigned int color1, unsigned int color2, unsigned int color3, vec3 normalvector){
-    // Create normalized normal vector for Phong
-    vec3 norm_N = normalize(normalvector);
-    vec3 point;
+void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float xx3, float yy3, unsigned int color1, unsigned int color2, unsigned int color3){
     // initialize edge case for vertical lines
     bool VertLine_p1p2 = false;
     bool VertLine_p1p3 = false;
@@ -533,8 +670,6 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
 
 //    QTextStream(stdout)<<"(x,y)= "<<x1<<","<<y1<<" ->  "<<x2<<","<<y2<<endl;
 
-
-
     // Declaration for the longest line p1p2
     float long_dx = x2-x1;
     float long_dy = y2-y1;
@@ -578,8 +713,6 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
 
     drawable->setPixel(x1,y1,color1);
 
-
-
     //Check for vertical slope (m = infinity)
     if((x1-x2)==0){
         VertLine_p1p2 = true;
@@ -616,6 +749,21 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
         float b_db = b2-b3;
         b_db = b_db/b_ddx;
 
+        //
+        rgbvec flatcolor;
+        vec3 lightsource;
+        lightsource.x = 325;
+        lightsource.y = 325;
+        lightsource.z = 0;
+
+        vec3 eye;
+        eye.x = 375;
+        eye.y = 375;
+        eye.z = 0;
+
+        rgbvec kd;
+
+
         if(long_dx>0){// x1<x2
             for(float x = x1+1;x<=x2;x++){
                 long_y=long_m*x+long_b;
@@ -627,11 +775,13 @@ void Client::PolygonRenderer (float xx1, float yy1, float xx2, float yy2, float 
                 long_rounded_g = round(temp_long_g);
                 long_rounded_b = round(temp_long_b);
 
+
+//                flatcolor = lightingmodel(point, A, B, I_a, I_i, lightsource, eye, facen, kd, ks, alpha);
                 current_Color1 = (0xff<<24) + ((long_rounded_r & 0xff)<<16) + ((long_rounded_g & 0xff)<<8) + (long_rounded_b & 0xff);
 
-                point.x =
 
-                phong()
+
+//                flatcolor = lightingmodel()
 
                 if(x<=x3){
                     if(!VertLine_p1p3){
@@ -874,7 +1024,7 @@ float Client::linelength(float x1, float y1, float x2, float y2) {
     return c;
 }
 
-void Client::depthCuePolygon(int x1,int y1,int z1, int x2, int y2, int z2, int x3, int y3, int z3, unsigned int nearColor, unsigned int farColor){
+void Client::depthCuePolygon(int x1,int y1,int z1, int x2, int y2, int z2, int x3, int y3, int z3, unsigned int nearColor, unsigned int farColor, float A, float B, float ks, float alpha, rgbvec I_a, rgbvec I_i, vec3 eye) {
     if(z1<=200 && z1>=0 && z2<=200 && z2>=0 && z3<=200 && z3>=0){
         float rNear = (nearColor>>16)& 0xff;
         float gNear = (nearColor>>8) & 0xff;
@@ -907,21 +1057,71 @@ void Client::depthCuePolygon(int x1,int y1,int z1, int x2, int y2, int z2, int x
         int g3 = round(gNear + dg*z3);
         int b3 = round(bNear + db*z3);
 
+//        lightingmodel(vec3 point, float A, float B, rgbvec I_a, rgbvec I_i, vec3 lightsource, vec3 eye, vec3 N, rgbvec kd, float ks, float alpha);
         vec3 normalvector;
         normalvector.x = x2 - x1;
         normalvector.y = y2 - y1;
         normalvector.z = z2 - z1;
 
-        unsigned int current_Color1 = (0xff<<24) + ((r1 & 0xff)<<16) + ((g1 & 0xff)<<8) + (b1 & 0xff);
-        unsigned int current_Color2 = (0xff<<24) + ((r2 & 0xff)<<16) + ((g2 & 0xff)<<8) + (b2 & 0xff);
-        unsigned int current_Color3 = (0xff<<24) + ((r3 & 0xff)<<16) + ((g3 & 0xff)<<8) + (b3 & 0xff);
+        vec3 facen;
+        vec3 v1;
+        vec3 v2;
+        vec3 v3;
 
-        PolygonRenderer(x1,y1,x2,y2,x3,y3,current_Color1,current_Color2,current_Color3, normalvector);
+        v1.x = x1;
+        v1.y = y1;
+        v1.z = z1;
+
+        v2.x = x2;
+        v2.y = y2;
+        v2.z = z2;
+
+        v3.x = x3;
+        v3.y = y3;
+        v3.z = z3;
+
+        facen = facenormal(v1, v2, v3);
+
+        rgbvec cc1, cc2, cc3;
+        cc1.r = r1/255;
+        cc1.g = g1/255;
+        cc1.b = b1/255;
+
+        cc2.r = r2/255;
+        cc2.g = g2/255;
+        cc2.b = b2/255;
+
+        cc3.r = r3/255;
+        cc3.g = g3/255;
+        cc3.b = b3/255;
+
+        rgbvec color1, color2, color3;
+        vec3 lightsource;
+        lightsource.x = 50;
+        lightsource.y = 50;
+        lightsource.z = 0;
+
+        color1 = lightingmodel(v1, A, B, I_a, I_i, lightsource, eye, facen, cc1, ks, alpha);
+        color2 = lightingmodel(v2, A, B, I_a, I_i, lightsource, eye, facen, cc2, ks, alpha);
+        color3 = lightingmodel(v3, A, B, I_a, I_i, lightsource, eye, facen, cc3, ks, alpha);
+
+//        int roundedr =
+
+        unsigned int current_Color1 = (0xff<<24) + ((int(round(color1.r * 255)) & 0xff)<<16) + ((int(round(color1.g * 255)) & 0xff)<<8) + (int(round(color1.b * 255)) & 0xff);
+        unsigned int current_Color2 = (0xff<<24) + ((int(round(color2.r * 255)) & 0xff)<<16) + ((int(round(color2.g * 255)) & 0xff)<<8) + (int(round(color2.b * 255)) & 0xff);
+        unsigned int current_Color3 = (0xff<<24) + ((int(round(color3.r * 255)) & 0xff)<<16) + ((int(round(color3.g * 255)) & 0xff)<<8) + (int(round(color3.b * 255)) & 0xff);
+
+//        unsigned int current_Color1 = (0xff<<24) + ((r1 & 0xff)<<16) + ((g1 & 0xff)<<8) + (b1 & 0xff);
+//        unsigned int current_Color2 = (0xff<<24) + ((r2 & 0xff)<<16) + ((g2 & 0xff)<<8) + (b2 & 0xff);
+//        unsigned int current_Color3 = (0xff<<24) + ((r3 & 0xff)<<16) + ((g3 & 0xff)<<8) + (b3 & 0xff);
+
+
+        PolygonRenderer(x1,y1,x2,y2,x3,y3,current_Color1,current_Color2,current_Color3);
     }
 }
 
 
-Client::rgbvec Client::phong(vec3 point, float A, float B, rgbvec I_a, rgbvec I_i, vec3 lightsource, vec3 eye, vec3 N, rgbvec kd, float ks, float alpha){
+Client::rgbvec Client::lightingmodel(vec3 point, float A, float B, rgbvec I_a, rgbvec I_i, vec3 lightsource, vec3 eye, vec3 N, rgbvec kd, float ks, float alpha){
     rgbvec I_eye;
     rgbvec part1;
     vec3 L, V, R;
@@ -999,9 +1199,30 @@ Client::vec3 Client::normalize(vec3 vec){
     return vector_norm;
 }
 
-//void Client::phong(float fatt, float I_a, float I_i, float N, float L, float V, float R, float kd, float ks, float alpha){
+Client::vec3 Client::crossproduct(vec3 vec1, vec3 vec2){
+    vec3 cp;
+    cp.x = vec1.y*vec2.z - vec1.z*vec2.y;
+    cp.y = vec1.z*vec2.x - vec1.x*vec2.z;
+    cp.z = vec1.x*vec2.y - vec1.y*vec2.x;
+    return cp;
+}
 
-//}
+Client::vec3 Client::facenormal(vec3 v1, vec3 v2, vec3 v3){
+    vec3 facen;
+    vec3 temp;
+    vec3 temp1;
+    temp.x = v2.x - v1.x;
+    temp.y = v2.y - v1.y;
+    temp.z = v2.z - v1.z;
+
+    temp1.x = v3.x - v1.x;
+    temp1.y = v3.y - v1.y;
+    temp1.z = v3.z - v1.z;
+
+    facen = normalize(crossproduct(temp, temp1));
+
+    return facen;
+}
 
 bool Client::SimpDrawer(char* filename[], unsigned int nearColour, unsigned int farColour){
     ifstream fin;
@@ -1055,6 +1276,10 @@ bool Client::SimpDrawer(char* filename[], unsigned int nearColour, unsigned int 
     world_m.mat[1][3]=375;
 
     Mat projection_m;
+
+    float A, B, ks, alpha;
+    rgbvec I_i, I_a;
+    vec3 eye;
 
     bool fill = true;
 
@@ -1263,7 +1488,7 @@ bool Client::SimpDrawer(char* filename[], unsigned int nearColour, unsigned int 
                 z3 = temp_x3*CTM.mat[2][0]+temp_y3*CTM.mat[2][1]+temp_z3*CTM.mat[2][2]+CTM.mat[2][3];
 
                 if(fill==true){
-                    depthCuePolygon(x1,y1,z1,x2,y2,z2,x3,y3,z3,nearColour,farColour);
+                    depthCuePolygon(x1,y1,z1,x2,y2,z2,x3,y3,z3,nearColour,farColour, A, B, ks, alpha, I_a, I_i, eye);
                 }
                 else{
                     draw_line_Bres(x1,y1,x2,y2,0xffffffff,0xffffffff);
@@ -1291,7 +1516,7 @@ bool Client::SimpDrawer(char* filename[], unsigned int nearColour, unsigned int 
                         }
                 }
 
-                meshDrawer(token[j][i+1], CTM,nearColour,farColour);
+//                meshDrawer(token[j][i+1], CTM,nearColour,farColour);
                 i++;
             }
             else if((strcmp(token[j][i],"camera"))==0){
@@ -1308,6 +1533,8 @@ bool Client::SimpDrawer(char* filename[], unsigned int nearColour, unsigned int 
                 QTextStream(stdout) << "hither " << hither << endl;
                 yon = atof(token[j][i+6]);
                 QTextStream(stdout) << "yon " << yon << endl;
+
+
 
 //                projection_m = projection(xlo, ylo, hither, xhi, yhi, yon);
 
@@ -1328,6 +1555,11 @@ bool Client::SimpDrawer(char* filename[], unsigned int nearColour, unsigned int 
                 amb_g = atof(token[j][i+2]);
                 amb_b = atof(token[j][i+3]);
 
+                rgbvec I_a;
+                I_a.r = amb_r;
+                I_a.g = amb_g;
+                I_a.b = amb_b;
+
                 j++;
             }
             else if((strcmp(token[j][i],"surface"))==0){
@@ -1336,11 +1568,30 @@ bool Client::SimpDrawer(char* filename[], unsigned int nearColour, unsigned int 
                 s_g = atof(token[j][i+2]);
                 s_b = atof(token[j][i+3]);
 
+
+
                 float ks; //Specular coefficient - Defaults to 0.3
                 ks = atof(token[j][i+4]);
 
                 float alpha; //Specular exponent - Defaults to 8
                 alpha = atof(token[j][i+5]);
+
+                rgbvec s;
+                s.r = s_r;
+                s.g = s_g;
+                s.b = s_b;
+
+                j++;
+            }
+            else if((strcmp(token[j][i],"light"))==0){
+                rgbvec I_i;
+                I_i.r = atof(token[j][i+1]);
+                I_i.g = atof(token[j][i+2]);
+                I_i.b = atof(token[j][i+3]);
+
+//                float A, B;
+                A = atof(token[j][i+4]);
+                B = atof(token[j][i+5]);
 
                 j++;
             }
@@ -1385,99 +1636,99 @@ typedef struct MeshCoord MeshCoord;
 //    return projection_m;
 //}
 
-bool Client::meshDrawer(const char* filename, Mat m, unsigned int nearColor, unsigned int farColor) {
-    ifstream fin;
+//bool Client::meshDrawer(const char* filename, Mat m, unsigned int nearColor, unsigned int farColor) {
+//    ifstream fin;
 
-    fin.open(filename);// open simp file
-    if(fin.fail()){// check if open successfully
-        QTextStream(stdout) << "file open error.."<<endl;
-        return false;
-    }
-    const char* token[MAX_TOKENS][MAX_TOKENS] = {}; // initialize to 0
-    const char* realtoken[MAX_TOKENS][MAX_TOKENS] = {};
-    int tokencount[MAX_TOKENS] = {};
-    int linecount=0;
-    //char buf[MAX_CHARS_PER_LINE];
+//    fin.open(filename);// open simp file
+//    if(fin.fail()){// check if open successfully
+//        QTextStream(stdout) << "file open error.."<<endl;
+//        return false;
+//    }
+//    const char* token[MAX_TOKENS][MAX_TOKENS] = {}; // initialize to 0
+//    const char* realtoken[MAX_TOKENS][MAX_TOKENS] = {};
+//    int tokencount[MAX_TOKENS] = {};
+//    int linecount=0;
+//    //char buf[MAX_CHARS_PER_LINE];
 
-    char buf[MAX_CHARS_PER_LINE];
-    while(!fin.eof()){
-        // read an entire line into memory
+//    char buf[MAX_CHARS_PER_LINE];
+//    while(!fin.eof()){
+//        // read an entire line into memory
 
-        char buf[MAX_CHARS_PER_LINE];
-        fin.getline(buf, MAX_CHARS_PER_LINE);
+//        char buf[MAX_CHARS_PER_LINE];
+//        fin.getline(buf, MAX_CHARS_PER_LINE);
 
-        // parse the line into blank-delimited tokens
-        int n = 0; // a for-loop index
+//        // parse the line into blank-delimited tokens
+//        int n = 0; // a for-loop index
 
-        // array to store memory addresses of the tokens in buf
+//        // array to store memory addresses of the tokens in buf
 
-        // parse the line
-        token[linecount][n] = strtok(buf, DELIMITER); // first token
-        if (token[linecount][0]) // zero if line is blank
-        {
-          for (n = 1; n < MAX_TOKENS; n++)
-          {
-            token[linecount][n] = strtok(0, DELIMITER); // subsequent tokens
+//        // parse the line
+//        token[linecount][n] = strtok(buf, DELIMITER); // first token
+//        if (token[linecount][0]) // zero if line is blank
+//        {
+//          for (n = 1; n < MAX_TOKENS; n++)
+//          {
+//            token[linecount][n] = strtok(0, DELIMITER); // subsequent tokens
 
-            if (!token[linecount][n]) break; // no more tokens
-          }
-        }
-        tokencount[linecount] = n;
+//            if (!token[linecount][n]) break; // no more tokens
+//          }
+//        }
+//        tokencount[linecount] = n;
 
-        // process (print) the tokens
-        for (int i = 0; i < n+1; i++){ // n = #of tokens
-          if(i<n) {
-              realtoken[linecount][i] = strdup(token[linecount][i]);
-          }
-          else {
-              realtoken[linecount][i] = "endofline";
-          }
-//          QTextStream(stdout) << "RealToken[" << linecount << "]["<<i<<"] = " << realtoken[linecount][i] << endl;
-        }
-        linecount++;
-    }
+//        // process (print) the tokens
+//        for (int i = 0; i < n+1; i++){ // n = #of tokens
+//          if(i<n) {
+//              realtoken[linecount][i] = strdup(token[linecount][i]);
+//          }
+//          else {
+//              realtoken[linecount][i] = "endofline";
+//          }
+////          QTextStream(stdout) << "RealToken[" << linecount << "]["<<i<<"] = " << realtoken[linecount][i] << endl;
+//        }
+//        linecount++;
+//    }
 
-    fin.close();
+//    fin.close();
 
-    int row = atoi(realtoken[0][0]);
-    int col = atoi(realtoken[1][0]);
+//    int row = atoi(realtoken[0][0]);
+//    int col = atoi(realtoken[1][0]);
 
 
-    meshPixel grid_points[row][col];
-    int colCounter=2;
+//    meshPixel grid_points[row][col];
+//    int colCounter=2;
 
-    for(int i=0; i<row;i++){
-        for(int j=0;j<col;j++){
-            grid_points[i][j].x = atoi(realtoken[colCounter][0]);
-            grid_points[i][j].y = atoi(realtoken[colCounter][1]);
-            grid_points[i][j].z = atoi(realtoken[colCounter][2]);
-            colCounter++;
+//    for(int i=0; i<row;i++){
+//        for(int j=0;j<col;j++){
+//            grid_points[i][j].x = atoi(realtoken[colCounter][0]);
+//            grid_points[i][j].y = atoi(realtoken[colCounter][1]);
+//            grid_points[i][j].z = atoi(realtoken[colCounter][2]);
+//            colCounter++;
 
-        }
-//        QTextStream(stdout)<<" "<<endl;
-    }
+//        }
+////        QTextStream(stdout)<<" "<<endl;
+//    }
 
-     //transform the grid points by CTM
-    for(int i=0; i<row; i++){
-        for(int j=0;j<col;j++){
-            float temp_x1 = grid_points[i][j].x;
-            float temp_y1 = grid_points[i][j].y;
-            float temp_z1 = grid_points[i][j].z;
+//     //transform the grid points by CTM
+//    for(int i=0; i<row; i++){
+//        for(int j=0;j<col;j++){
+//            float temp_x1 = grid_points[i][j].x;
+//            float temp_y1 = grid_points[i][j].y;
+//            float temp_z1 = grid_points[i][j].z;
 
-            grid_points[i][j].x = temp_x1*m.mat[0][0]+temp_y1*m.mat[0][1]+temp_z1*m.mat[0][2]+m.mat[0][3];
-            grid_points[i][j].y = temp_x1*m.mat[1][0]+temp_y1*m.mat[1][1]+temp_z1*m.mat[1][2]+m.mat[1][3];
-            grid_points[i][j].z = temp_x1*m.mat[2][0]+temp_y1*m.mat[2][1]+temp_z1*m.mat[2][2]+m.mat[2][3];
+//            grid_points[i][j].x = temp_x1*m.mat[0][0]+temp_y1*m.mat[0][1]+temp_z1*m.mat[0][2]+m.mat[0][3];
+//            grid_points[i][j].y = temp_x1*m.mat[1][0]+temp_y1*m.mat[1][1]+temp_z1*m.mat[1][2]+m.mat[1][3];
+//            grid_points[i][j].z = temp_x1*m.mat[2][0]+temp_y1*m.mat[2][1]+temp_z1*m.mat[2][2]+m.mat[2][3];
 
-        }
-    }
-    for(int i=0; i<row;i++){
-        for (int j=0;j<col-1;j++){
-            if(j<col && i<row-1){
-                depthCuePolygon(grid_points[i][j].x,grid_points[i][j].y,grid_points[i][j].z,grid_points[i][j+1].x,grid_points[i][j+1].y,grid_points[i][j+1].z,grid_points[i+1][j].x,grid_points[i+1][j].y,grid_points[i+1][j].z,nearColor,farColor);
-                depthCuePolygon(grid_points[i+1][j].x,grid_points[i+1][j].y,grid_points[i+1][j].z,grid_points[i+1][j+1].x,grid_points[i+1][j+1].y,grid_points[i+1][j+1].z,grid_points[i][j+1].x,grid_points[i][j+1].y,grid_points[i][j+1].z,nearColor,farColor);
-            }
-        }
-    }
-    return true;
-}
+//        }
+//    }
+//    for(int i=0; i<row;i++){
+//        for (int j=0;j<col-1;j++){
+//            if(j<col && i<row-1){
+//                depthCuePolygon(grid_points[i][j].x,grid_points[i][j].y,grid_points[i][j].z,grid_points[i][j+1].x,grid_points[i][j+1].y,grid_points[i][j+1].z,grid_points[i+1][j].x,grid_points[i+1][j].y,grid_points[i+1][j].z,nearColor,farColor);
+//                depthCuePolygon(grid_points[i+1][j].x,grid_points[i+1][j].y,grid_points[i+1][j].z,grid_points[i+1][j+1].x,grid_points[i+1][j+1].y,grid_points[i+1][j+1].z,grid_points[i][j+1].x,grid_points[i][j+1].y,grid_points[i][j+1].z,nearColor,farColor);
+//            }
+//        }
+//    }
+//    return true;
+//}
 

@@ -24,15 +24,17 @@ private:
     void draw_blerp(int x1, int y1, int x2, int y2, int x3, int y3, unsigned int color1, unsigned int color2, unsigned int color3);
     float linelength(float x1, float y1, float x2, float y2);
     int Distance(int x1, int y1, int x2, int y2);
-    void PolygonRenderer(float xx1, float yy1, float xx2, float yy2, float xx3, float yy3, unsigned int color1, unsigned int color2, unsigned int color3, vec3 normalvector);
+    void PolygonRenderer(float xx1, float yy1, float xx2, float yy2, float xx3, float yy3, unsigned int color1, unsigned int color2, unsigned int color3);
     bool SimpDrawer(char* filename[], unsigned int nearColor, unsigned int farColor);
     bool meshDrawer(const char* filename, Mat m, unsigned int nearColor, unsigned int farColor);
-    void depthCuePolygon(int x1,int y1,int z1, int x2, int y2, int z2, int x3, int y3, int z3, unsigned int nearColor, unsigned int farColor);
+    void depthCuePolygon(int x1,int y1,int z1, int x2, int y2, int z2, int x3, int y3, int z3, unsigned int nearColor, unsigned int farColor, float A, float B, float ks, float alpha, rgbvec I_a, rgbvec I_i, vec3 eye);
 //    Mat projection(int xlo, int ylo, int hither, int xhi, int yhi, int yon);
-    rgbvec phong(vec3 point, float A, float B, rgbvec I_a, rgbvec I_i, vec3 lightsource, vec3 eye, vec3 N, rgbvec kd, float ks, float alpha);
+    rgbvec lightingmodel(vec3 point, float A, float B, rgbvec I_a, rgbvec I_i, vec3 lightsource, vec3 eye, vec3 N, rgbvec kd, float ks, float alpha);
     vec3 normalize(vec3 vec);
     float dotproduct(vec3 vec1, vec3 vec2);
     float veclength(vec3 vec1, vec3 vec2);
+    vec3 crossproduct(vec3 vec1, vec3 vec2);
+    vec3 facenormal(vec3 v1, vec3 v2, vec3 v3);
 };
 
 #endif // CLIENT_H
